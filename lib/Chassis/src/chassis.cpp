@@ -125,19 +125,18 @@ void Chassis::UpdateMotors(void) {
  * SetWheelSpeeds converts the linear wheel speeds (axes relative to ground) to
  * motor speeds.
  */
-void Chassis::SetWheelSpeeds(float left_speed_cm_per_sec,
-                             float right_speed_cm_per_sec) {
+void Chassis::SetWheelSpeeds(float leftSpeedCMPerSec,
+                             float rightSpeedCMPerSec) {
   const float controlPeriodSec = CONTROL_LOOP_PERIOD_MS / 1000.0;
 
-  float leftTicksPerSec = left_speed_cm_per_sec * LEFT_TICKS_PER_CM;
-  float right_ticks_per_sec = right_speed_cm_per_sec * RIGHT_TICKS_PER_CM;
+  float leftTicksPerSec = leftSpeedCMPerSec * TICKS_PER_CM;
+  float rightTicksPerSec = rightSpeedCMPerSec * TICKS_PER_CM;
 
   float leftTicksPerControlInterval = leftTicksPerSec * controlPeriodSec;
-  float right_ticks_per_control_interval =
-      right_ticks_per_sec * controlPeriodSec;
+  float rightTicksPerControlInterval = rightTicksPerSec * controlPeriodSec;
 
   leftMotor.SetTargetSpeed(leftTicksPerControlInterval);
-  rightMotor.SetTargetSpeed(right_ticks_per_control_interval);
+  rightMotor.SetTargetSpeed(rightTicksPerControlInterval);
 }
 
 /**
@@ -157,6 +156,17 @@ void Chassis::InitializeMotors(void) {
 void Chassis::SetMotorEfforts(int16_t left, int16_t right) {
   leftMotor.SetMotorEffortDirect(left);
   rightMotor.SetMotorEffortDirect(right);
+}
+
+float Chassis::getDistanceElapsed() {
+  // Ass`uming motorLeft and motorRight are objects of a Motor class with
+  // elapsedDistance method
+  double leftDistance = leftMotor.getElapsedDistance();
+  double rightDistance = rightMotor.getElapsedDistance();
+
+  double averageDistance = (leftDistance + rightDistance) / 2.0;
+
+  return averageDistance;
 }
 
 /**

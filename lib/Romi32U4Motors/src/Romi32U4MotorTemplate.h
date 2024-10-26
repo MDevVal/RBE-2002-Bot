@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 #include <FastGPIO.h>
+#include <chassis.h>
 
 // define the motor pins here
 #define PWM_L 10
@@ -25,7 +26,7 @@ protected:
 
   // TODO: After you tune your motors, set the gains here.
   float Kp = 4;
-  float Ki = 0.0; // 1.25;
+  float Ki = 1.25;
   float Kd = 3.5;
 
   // Used to keep track of the target speed, in counts / interval.
@@ -87,6 +88,8 @@ protected:
     return speed;
   }
 
+  float getElapsedDistance() { return encCount / Chassis::TICKS_PER_CM; }
+
   /**
    * Sets the target speed in "encoder ticks/16 ms interval"
    * */
@@ -106,6 +109,10 @@ protected:
     ctrlMode = CTRL_SPEED;
   }
 
+  static const int BUFFER_SIZE = 50;
+  float errorBuffer[BUFFER_SIZE] = {0};
+  int bufferIndex = 0;
+
   /**
    * ControlMotorSpeed implements the PID controller. It should _not_ be called
    * by user code. Instead, ControlMotorSpeed is called from
@@ -113,14 +120,15 @@ protected:
    */
   void ControlMotorSpeed(bool debug = false) {
     if (ctrlMode == CTRL_SPEED) {
-      // Calculate the error in speed
       float error = targetSpeed - speed;
-      sumError += error;
 
-      // Calculate the effort from the PID gains
+      sumError -= errorBuffer[bufferIndex];
+      errorBuffer[bufferIndex] = error;
+      sumError += error;
+      bufferIndex = (bufferIndex + 1) % BUFFER_SIZE;
+
       int16_t effort = Kp * error + Ki * sumError;
 
-      // Set the effort for the motor
       SetEffort(effort);
 
       if (debug) {
@@ -138,6 +146,7 @@ protected:
     }
   }
 
+  // Other class members...
   static void AttachInterrupts(void);
 
   /**

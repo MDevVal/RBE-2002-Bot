@@ -1,6 +1,5 @@
 #pragma once
 
-#include "event_timer.h"
 #include <Arduino.h>
 
 class Chassis {
@@ -10,8 +9,6 @@ protected:
    * fine tune them.
    */
   const float ROBOT_RADIUS = 14.7 / 2;
-  const float LEFT_TICKS_PER_CM = 1440.0 / (3.1416 * 7.0);
-  const float RIGHT_TICKS_PER_CM = 1440.0 / (3.1416 * 7.0);
 
   /**
    * You can change the control loop period, but you should use multiples of 4
@@ -32,6 +29,8 @@ protected:
   static uint8_t loopFlag;
 
 public:
+  constexpr static const float TICKS_PER_CM = 1440.0 / (3.1416 * 7.0);
+
   Chassis(void) {}
   void InititalizeChassis(void) {
     InitializeMotorControlTimer();
@@ -51,6 +50,7 @@ public:
   void SetTwist(float fwdSpeed, float rotSpeed);
   void SetWheelSpeeds(float, float);
   void UpdateMotors(void);
+  float getDistanceElapsed();
 
 protected:
   /**

@@ -89,15 +89,19 @@ void Robot::EnterLineFollowing(float speed) {
   Serial.println(" -> LINING");
   baseSpeed = speed;
   robotState = ROBOT_LINING;
+  prevError = 0;
 }
 
 void Robot::LineFollowingUpdate(void) {
   if (robotState == ROBOT_LINING) {
+    float lineError = lineSensor.CalcError() / 1023.0;
+    float derivative = (lineError - prevError);
 
-    float lineError = lineSensor.CalcError() / 1000.0;
-    float turnEffort = lineError * lineKp;
+    float turnEffort = lineError * lineKp - derivative * lineKd;
 
     chassis.SetTwist(baseSpeed, turnEffort);
+
+    prevError = lineError;
   }
 }
 
@@ -167,6 +171,7 @@ void Robot::RobotLoop(void) {
    * Check the Chassis timer, which is used for executing motor control
    */
   if (chassis.CheckChassisTimer()) {
+
     // add synchronous, pre-motor-update actions here
     if (robotState == ROBOT_LINING) {
       LineFollowingUpdate();

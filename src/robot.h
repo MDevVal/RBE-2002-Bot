@@ -5,6 +5,10 @@
 
 class Robot {
 protected:
+  float prevError = 0.0;
+  float lineKp = 0.0;
+  float lineKd = 0.0;
+
   /**
    * We define some modes for you. SETUP is used for adjusting gains and so
    * forth. Most of the activities will run in AUTO. You shouldn't need to mess
@@ -73,8 +77,6 @@ public:
   } // reserve some memory to avoid reallocation
   void InitializeRobot(void);
   void RobotLoop(void);
-  float lineKp = 0;
-  float lineKd = 0.0;
 
 protected:
   /* For managing IR remote key presses*/

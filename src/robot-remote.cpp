@@ -48,15 +48,13 @@ void Robot::HandleKeyCode(int16_t keyCode) {
    * AUTO commands
    */
 
-  int speed = 10;
   if (robotCtrlMode == CTRL_AUTO) {
     switch (keyCode) {
     case REWIND:
-      EnterLineFollowing(10);
+      EnterLineFollowing(20);
       break;
     case NUM_0_10:
-      speed += 10;
-      EnterLineFollowing(speed);
+      Robot::baseSpeed += 5;
       break;
     case UP_ARROW:
       Robot::lineKp += 0.1;
@@ -77,6 +75,9 @@ void Robot::HandleKeyCode(int16_t keyCode) {
       Robot::lineKd -= 0.1;
       Serial.print("Line Kd = ");
       Serial.println(Robot::lineKd);
+      break;
+    case VOLplus:
+      Serial.println(chassis.getDistanceElapsed());
       break;
     case NUM_1:
     case NUM_2:
@@ -143,7 +144,7 @@ void Robot::HandleKeyCode(int16_t keyCode) {
       break;
     case UP_ARROW:
       if (!keyString.length())
-        chassis.SetWheelSpeeds(600, 0);
+        chassis.SetWheelSpeeds(20, 20);
       break;
     case DOWN_ARROW:
       if (!keyString.length())
