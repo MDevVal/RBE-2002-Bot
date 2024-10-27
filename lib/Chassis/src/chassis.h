@@ -50,7 +50,7 @@ public:
   void SetTwist(float fwdSpeed, float rotSpeed);
   void SetWheelSpeeds(float, float);
   void UpdateMotors(void);
-  float getDistanceElapsed();
+  float GetDistanceElapsed();
 
 protected:
   /**

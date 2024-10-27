@@ -158,13 +158,13 @@ void Chassis::SetMotorEfforts(int16_t left, int16_t right) {
   rightMotor.SetMotorEffortDirect(right);
 }
 
-float Chassis::getDistanceElapsed() {
+float Chassis::GetDistanceElapsed() {
   // Ass`uming motorLeft and motorRight are objects of a Motor class with
   // elapsedDistance method
-  double leftDistance = leftMotor.getElapsedDistance();
-  double rightDistance = rightMotor.getElapsedDistance();
+  float leftDistance = leftMotor.getElapsedDistance();
+  float rightDistance = rightMotor.getElapsedDistance();
 
-  double averageDistance = (leftDistance + rightDistance) / 2.0;
+  float averageDistance = (leftDistance + rightDistance) / 2.0;
 
   return averageDistance;
 }

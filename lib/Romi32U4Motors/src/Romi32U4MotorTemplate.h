@@ -49,7 +49,7 @@ protected:
 
   // Keeps track of encoder changes
   volatile int16_t prevCount;
-  volatile int16_t encCount;
+  volatile long encCount;
   volatile int8_t lastA;
   volatile int8_t lastB;
 
@@ -120,6 +120,15 @@ protected:
    */
   void ControlMotorSpeed(bool debug = false) {
     if (ctrlMode == CTRL_SPEED) {
+      // Reset error if bot is stationary
+      if (speed == 0) {
+        for (int i = 0; i < BUFFER_SIZE; i++) {
+          errorBuffer[i] = 0;
+        }
+        sumError = 0;
+        bufferIndex = 0;
+      }
+
       float error = targetSpeed - speed;
 
       sumError -= errorBuffer[bufferIndex];

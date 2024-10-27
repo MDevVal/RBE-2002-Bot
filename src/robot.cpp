@@ -1,4 +1,5 @@
 #include "robot.h"
+#include "Arduino.h"
 #include <IRdecoder.h>
 
 void Robot::InitializeRobot(void) {
@@ -89,20 +90,62 @@ void Robot::EnterLineFollowing(float speed) {
   Serial.println(" -> LINING");
   baseSpeed = speed;
   robotState = ROBOT_LINING;
+
+  elapsedTime = 0;
   prevError = 0;
+  ResetElapsedDistance();
 }
 
+float Robot::GetDistanceElapsed() {
+  return chassis.GetDistanceElapsed() - elapsedDistanceSetPoint;
+}
+
+void Robot::ResetElapsedDistance() {
+  elapsedDistanceSetPoint = chassis.GetDistanceElapsed();
+}
+
+int eStopTicks = 0;
 void Robot::LineFollowingUpdate(void) {
   if (robotState == ROBOT_LINING) {
     float lineError = lineSensor.CalcError() / 1023.0;
     float derivative = (lineError - prevError);
 
-    float turnEffort = lineError * lineKp - derivative * lineKd;
+    if (lineSensor.ReadLeft() < 250 && lineSensor.ReadRight() < 250) {
+      eStopTicks++;
+      emergencyKp += 0.1;
+    } else {
+      eStopTicks = 0;
+      emergencyKp = 0;
+    }
+
+    if (eStopTicks > 15) {
+      chassis.Stop();
+      EnterIdleState();
+      return;
+    }
+
+    Serial.print("left: ");
+    Serial.println(lineSensor.ReadLeft());
+    Serial.print(" right: ");
+    Serial.println(lineSensor.ReadRight());
+
+    float turnEffort = lineError * (lineKp + emergencyKp) + derivative * lineKd;
 
     chassis.SetTwist(baseSpeed, turnEffort);
 
     prevError = lineError;
   }
+}
+
+void Robot::PrintLapStats() {
+  Serial.print("---LAP COMPLETE---");
+  Serial.print("\nLAP TIME: ");
+  Serial.print(lastLapTime);
+  Serial.print("s");
+
+  Serial.print("\nLAP SPEED: ");
+  Serial.print(lapDistance / lastLapTime);
+  Serial.println("cm/s");
 }
 
 /**
@@ -171,9 +214,27 @@ void Robot::RobotLoop(void) {
    * Check the Chassis timer, which is used for executing motor control
    */
   if (chassis.CheckChassisTimer()) {
-
     // add synchronous, pre-motor-update actions here
     if (robotState == ROBOT_LINING) {
+      if (elapsedTime == 0)
+        elapsedTime = millis();
+
+      Serial.print("Distance: ");
+      Serial.print(chassis.GetDistanceElapsed());
+      Serial.print("\nTime: ");
+      Serial.print((millis() - elapsedTime) / 1000);
+      Serial.print("\n");
+
+      if (GetDistanceElapsed() > lapDistance) {
+        EnterIdleState();
+        ResetElapsedDistance();
+
+        lastLapTime = (millis() - elapsedTime) / 1000;
+
+        PrintLapStats();
+
+        elapsedTime = 0;
+      }
       LineFollowingUpdate();
     }
 

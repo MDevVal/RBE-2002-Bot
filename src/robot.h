@@ -6,8 +6,14 @@
 class Robot {
 protected:
   float prevError = 0.0;
-  float lineKp = 0.0;
-  float lineKd = 0.0;
+  float lineKp = 1.85;
+  float lineKd = 0.1;
+  float emergencyKp = 0.0;
+
+  unsigned long lastLapTime = 0;
+  float lapDistance = 523;
+  float elapsedDistanceSetPoint = 0;
+  unsigned long elapsedTime = 0;
 
   /**
    * We define some modes for you. SETUP is used for adjusting gains and so
@@ -95,6 +101,10 @@ protected:
    */
   void EnterLineFollowing(float speed);
   void LineFollowingUpdate(void);
+
+  void PrintLapStats();
+  float GetDistanceElapsed();
+  void ResetElapsedDistance();
 
   bool CheckIntersection(void) { return lineSensor.CheckIntersection(); }
   void HandleIntersection(void);

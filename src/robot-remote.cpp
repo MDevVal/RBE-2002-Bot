@@ -77,9 +77,11 @@ void Robot::HandleKeyCode(int16_t keyCode) {
       Serial.println(Robot::lineKd);
       break;
     case VOLplus:
-      Serial.println(chassis.getDistanceElapsed());
+      Serial.println(chassis.GetDistanceElapsed());
       break;
-    case NUM_1:
+    case ENTER_SAVE:
+      PrintLapStats();
+      break;
     case NUM_2:
     case NUM_3:
     case NUM_4:
