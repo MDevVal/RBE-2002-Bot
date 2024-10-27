@@ -110,24 +110,19 @@ void Robot::LineFollowingUpdate(void) {
     float lineError = lineSensor.CalcError() / 1023.0;
     float derivative = (lineError - prevError);
 
-    if (lineSensor.ReadLeft() < 250 && lineSensor.ReadRight() < 250) {
+    if (lineSensor.ReadLeft() < 55 && lineSensor.ReadRight() < 55) {
       eStopTicks++;
-      emergencyKp += 0.1;
+      //      emergencyKp += 0.1;
+
     } else {
       eStopTicks = 0;
-      emergencyKp = 0;
     }
 
-    if (eStopTicks > 15) {
+    if (eStopTicks > 25) {
       chassis.Stop();
       EnterIdleState();
       return;
     }
-
-    Serial.print("left: ");
-    Serial.println(lineSensor.ReadLeft());
-    Serial.print(" right: ");
-    Serial.println(lineSensor.ReadRight());
 
     float turnEffort = lineError * (lineKp + emergencyKp) + derivative * lineKd;
 
@@ -207,8 +202,9 @@ void Robot::RobotLoop(void) {
    * Handle any IR remote keypresses.
    */
   int16_t keyCode = decoder.getKeyCode();
-  if (keyCode != -1)
+  if (keyCode != -1) {
     HandleKeyCode(keyCode);
+  }
 
   /**
    * Check the Chassis timer, which is used for executing motor control

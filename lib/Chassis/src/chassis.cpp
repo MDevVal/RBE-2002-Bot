@@ -5,18 +5,18 @@ Romi32U4EncodedMotor<LEFT_XOR, LEFT_B, PWM_L, DIR_L, OCR_L> leftMotor;
 Romi32U4EncodedMotor<RIGHT_XOR, RIGHT_B, PWM_R, DIR_R, OCR_R> rightMotor;
 
 void Chassis::SetMotorKp(float kp) {
-  leftMotor.Kp = kp;
-  rightMotor.Kp = kp;
+  leftMotor.motorKp = kp;
+  rightMotor.motorKp = kp;
 }
 void Chassis::SetMotorKi(float ki) {
-  leftMotor.Ki = ki;
-  rightMotor.Ki = ki;
+  leftMotor.MotorKi = ki;
+  rightMotor.MotorKi = ki;
   leftMotor.sumError = 0;
   rightMotor.sumError = 0;
 }
 void Chassis::SetMotorKd(float kd) {
-  leftMotor.Kd = kd;
-  rightMotor.Kd = kd;
+  leftMotor.MotorKd = kd;
+  rightMotor.MotorKd = kd;
 }
 
 /**
@@ -81,7 +81,7 @@ void Chassis::InitializeMotorControlTimer(void) {
    * allows you to check that the timing is correct. It will also make a lot
    * of noise, so do so sparingly.
    */
-  // TCCR4C = 0x04
+  // TCCR4C = 0x04;
   // pinMode(6, OUTPUT);
 
   // Re-enable interrupts

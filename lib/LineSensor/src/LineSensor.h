@@ -2,14 +2,9 @@
 
 #include <Arduino.h>
 
-#define LEFT_LINE_SENSOR A3
-#define RIGHT_LINE_SENSOR A4
-
 class LineSensor {
 protected:
-  uint8_t leftSensorPin = LEFT_LINE_SENSOR;
-  uint8_t rightSensorPin = RIGHT_LINE_SENSOR;
-
+  byte reflectivityPins[6] = {A4, A3, A2, A6, A0, A11};
   bool prevOnIntersection = false;
 
 public:

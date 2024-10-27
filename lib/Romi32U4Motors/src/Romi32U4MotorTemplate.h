@@ -24,10 +24,9 @@ protected:
   enum CTRL_MODE : uint8_t { CTRL_DIRECT, CTRL_SPEED };
   volatile CTRL_MODE ctrlMode = CTRL_DIRECT;
 
-  // TODO: After you tune your motors, set the gains here.
-  float Kp = 4;
-  float Ki = 1.25;
-  float Kd = 3.5;
+  float motorKp = 4;
+  float MotorKi = 1.25;
+  float MotorKd = 3.5;
 
   // Used to keep track of the target speed, in counts / interval.
   float targetSpeed = 0;
@@ -121,14 +120,14 @@ protected:
   void ControlMotorSpeed(bool debug = false) {
     if (ctrlMode == CTRL_SPEED) {
       // Reset error if bot is stationary
-      if (speed == 0) {
-        for (int i = 0; i < BUFFER_SIZE; i++) {
-          errorBuffer[i] = 0;
-        }
-        sumError = 0;
-        bufferIndex = 0;
-      }
-
+      // if (speed == 0) {
+      //   for (int i = 0; i < BUFFER_SIZE; i++) {
+      //     errorBuffer[i] = 0;
+      //   }
+      //   sumError = 0;
+      //   bufferIndex = 0;
+      // }
+      //
       float error = targetSpeed - speed;
 
       sumError -= errorBuffer[bufferIndex];
@@ -136,7 +135,7 @@ protected:
       sumError += error;
       bufferIndex = (bufferIndex + 1) % BUFFER_SIZE;
 
-      int16_t effort = Kp * error + Ki * sumError;
+      int16_t effort = motorKp * error + MotorKi * sumError;
 
       SetEffort(effort);
 
@@ -200,9 +199,9 @@ protected:
 
 public:
   void SetPIDCoeffs(float p, float i, float d) {
-    Kp = p;
-    Ki = i;
-    Kd = d;
+    motorKp = p;
+    MotorKi = i;
+    MotorKd = d;
     sumError = 0;
   }
 };

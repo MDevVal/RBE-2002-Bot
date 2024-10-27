@@ -15,12 +15,17 @@
 #define IR_PIN 17
 IRDecoder decoder(IR_PIN);
 
+float motorKp = 4.0;
+float motorKi = 1.25;
+float motorKd = 2.0; // 3.5;
+
 void Robot::HandleKeyCode(int16_t keyCode) {
   Serial.println(keyCode);
 
   // Regardless of current state, if ENTER is pressed, go to idle state
-  if (keyCode == STOP_MODE)
+  if (keyCode == STOP_MODE) {
     EnterIdleState();
+  }
 
   // The SETUP key is used for tuning motor gains
   else if (keyCode == SETUP_BTN) {
@@ -120,61 +125,47 @@ void Robot::HandleKeyCode(int16_t keyCode) {
   /**
    * SETUP mode
    */
+
   else if (robotCtrlMode == CTRL_SETUP) {
-    float k = 0;
     switch (keyCode) {
-    case VOLminus:
-      k = keyString.toInt() / 100.0;
-      Serial.print("Kp = ");
-      Serial.println(k);
-      chassis.SetMotorKp(k);
-      keyString = "";
-      break;
-    case PLAY_PAUSE:
-      k = keyString.toInt() / 100.0;
-      Serial.print("Ki = ");
-      Serial.println(k);
-      chassis.SetMotorKi(k);
-      keyString = "";
-      break;
-    case VOLplus:
-      k = keyString.toInt() / 100.0;
-      Serial.print("Kd = ");
-      Serial.println(k);
-      chassis.SetMotorKd(k);
-      keyString = "";
-      break;
     case UP_ARROW:
-      if (!keyString.length())
-        chassis.SetWheelSpeeds(20, 20);
+      motorKp += 0.1;
+      Serial.print("Motor Kp = ");
+      Serial.println(motorKp);
       break;
     case DOWN_ARROW:
-      if (!keyString.length())
-        chassis.SetWheelSpeeds(0, 20);
+      motorKp -= 0.1;
+      Serial.print("Motor Kp = ");
+      Serial.println(motorKp);
       break;
-    case ENTER_SAVE:
-      keyString = "";
-      chassis.SetWheelSpeeds(0, 0);
+    case RIGHT_ARROW:
+      motorKi += 0.1;
+      Serial.print("Motor Ki = ");
+      Serial.println(motorKi);
       break;
-    case NUM_1:
-    case NUM_2:
-    case NUM_3:
-      keyString += (char)(keyCode + 33);
+    case LEFT_ARROW:
+      motorKi -= 0.1;
+      Serial.print("Motor Ki = ");
+      Serial.println(motorKi);
       break;
-    case NUM_4:
-    case NUM_5:
-    case NUM_6:
-      keyString += (char)(keyCode + 32);
-      break;
-    case NUM_7:
-    case NUM_8:
-    case NUM_9:
-      keyString += (char)(keyCode + 31);
+    case REWIND:
+      motorKd += 0.1;
+      Serial.print("Motor Kd = ");
+      Serial.println(motorKd);
       break;
     case NUM_0_10:
-      keyString += '0';
+      motorKd -= 0.1;
+      Serial.print("Motor Kd = ");
+      Serial.println(motorKd);
+      break;
+    case PLAY_PAUSE:
+      chassis.SetWheelSpeeds(20, 20);
       break;
     }
+
+    chassis.SetMotorKp(motorKp);
+    chassis.SetMotorKi(motorKi);
+    chassis.SetMotorKd(motorKd);
   }
 }
 
