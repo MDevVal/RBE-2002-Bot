@@ -26,7 +26,7 @@ protected:
 
   float motorKp = 4;
   float MotorKi = 1.25;
-  float MotorKd = 3.5;
+  float MotorKd = 0.0;
 
   // Used to keep track of the target speed, in counts / interval.
   float targetSpeed = 0;
@@ -108,10 +108,6 @@ protected:
     ctrlMode = CTRL_SPEED;
   }
 
-  static const int BUFFER_SIZE = 50;
-  float errorBuffer[BUFFER_SIZE] = {0};
-  int bufferIndex = 0;
-
   /**
    * ControlMotorSpeed implements the PID controller. It should _not_ be called
    * by user code. Instead, ControlMotorSpeed is called from
@@ -119,33 +115,24 @@ protected:
    */
   void ControlMotorSpeed(bool debug = false) {
     if (ctrlMode == CTRL_SPEED) {
-      // Reset error if bot is stationary
-      // if (speed == 0) {
-      //   for (int i = 0; i < BUFFER_SIZE; i++) {
-      //     errorBuffer[i] = 0;
-      //   }
-      //   sumError = 0;
-      //   bufferIndex = 0;
-      // }
-      //
+
       float error = targetSpeed - speed;
 
-      sumError -= errorBuffer[bufferIndex];
-      errorBuffer[bufferIndex] = error;
-      sumError += error;
-      bufferIndex = (bufferIndex + 1) % BUFFER_SIZE;
-
       int16_t effort = motorKp * error + MotorKi * sumError;
+
+      sumError += error;
 
       SetEffort(effort);
 
       if (debug) {
+
+        Serial.print("target:");
         Serial.print(targetSpeed);
-        Serial.print('\t');
+        Serial.print("\tspeed:");
         Serial.print(speed);
-        Serial.print('\t');
+        Serial.print("\terror:");
         Serial.print(error);
-        Serial.print('\t');
+        Serial.print("\teffort:");
         Serial.print(
             effort /
             10.0); // N.B. that we divide by 10 to make the graph cleaner

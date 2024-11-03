@@ -8,7 +8,6 @@ protected:
    * Kinematic parameters default to the spec sheet from Pololu. You'll need to
    * fine tune them.
    */
-  const float ROBOT_RADIUS = 14.7 / 2;
 
   /**
    * You can change the control loop period, but you should use multiples of 4
@@ -30,6 +29,7 @@ protected:
 
 public:
   constexpr static const float TICKS_PER_CM = 1440.0 / (3.1416 * 7.0);
+  constexpr static const float ROBOT_RADIUS = 14.7 / 2;
 
   Chassis(void) {}
   void InititalizeChassis(void) {

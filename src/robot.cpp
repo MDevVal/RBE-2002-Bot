@@ -1,6 +1,6 @@
 #include "robot.h"
 #include "Arduino.h"
-#include <IRdecoder.h>
+#include "LSM6.h"
 
 void Robot::InitializeRobot(void) {
   chassis.InititalizeChassis();
@@ -15,11 +15,8 @@ void Robot::InitializeRobot(void) {
    * Initialize the IMU and set the rate and scale to reasonable values.
    */
   imu.init();
-
-  /**
-   * TODO: Add code to set the data rate and scale of IMU (or edit
-   * LSM6::setDefaults())
-   */
+  imu.setGyroDataOutputRate(LSM6::ODR::ODR208);
+  imu.setFullScaleGyro(LSM6::GYRO_FS::GYRO_FS1000);
 
   // The line sensor elements default to INPUTs, but we'll initialize anyways,
   // for completeness
@@ -27,59 +24,110 @@ void Robot::InitializeRobot(void) {
 }
 
 void Robot::EnterIdleState(void) {
+  if (robotState == ROBOT_IDLE)
+    return;
+
   Serial.println("-> IDLE");
-  chassis.Stop();
-  keyString = "";
+
   robotState = ROBOT_IDLE;
+  chassis.Stop();
+  idleTime = millis();
 }
 
-/**
- * Functions related to the IMU (turning; ramp detection)
- */
-void Robot::EnterTurn(float angleInDeg) {
-  Serial.println(" -> TURN");
+void Robot::EnterTurn(float angle) {
+  Serial.println(" -> TURNING");
   robotState = ROBOT_TURNING;
 
-  /**
-   * TODO: Add code to initiate the turn and set the target
-   */
+  bool clockwise = false;
+  if (angle < 0) {
+    angle = 360 + angle;
+    clockwise = true;
+  }
+
+  targetHeading = fmod(currentHeading + angle, 360);
+
+  if (clockwise) {
+    chassis.SetTwist(0, 1);
+  } else {
+    chassis.SetTwist(0, -1);
+  }
 }
 
+int lastTime = 0;
 bool Robot::CheckTurnComplete(void) {
   bool retVal = false;
 
-  /**
-   * TODO: add a checker to detect when the turn is complete
-   */
+  if (robotState != ROBOT_TURNING)
+    return retVal;
+
+  if (millis() - lastTime > 0) {
+    lastTime = millis();
+    Serial.print("Current: ");
+    Serial.println(currentHeading);
+    Serial.print("Target: ");
+    Serial.println(targetHeading);
+  }
+
+  if (robotState == ROBOT_TURNING) {
+    if (abs(currentHeading - targetHeading) <= 0.1) {
+      EnterIdleState();
+      retVal = true;
+    }
+  }
 
   return retVal;
 }
 
-void Robot::HandleTurnComplete(void) {
-  /**
-   * TODO: Add code to handle the completed turn
-   */
-}
+void Robot::HandleTurnComplete(void) { EnterIdleState(); }
 
 /**
- * Here is a good example of handling information differently, depending on the
- * state. If the Romi is not moving, we can update the bias (but be careful when
- * you first start up!). When it's moving, then we update the heading.
+ * Here is a good example of handling information differently, depending on
+ * the state. If the Romi is not moving, we can update the bias (but be
+ * careful when you first start up!). When it's moving, then we update the
+ * heading.
  */
 void Robot::HandleOrientationUpdate(void) {
   prevEulerAngles = eulerAngles;
+
   if (robotState == ROBOT_IDLE) {
-    // TODO: You'll need to add code to LSM6 to update the bias
-    imu.updateGyroBias();
-  }
+    if (millis() - idleTime > 1000) {
+      imu.updateGyroBias();
+    }
+  } else {
+    // Subtract gyro bias
+    imu.g.x -= imu.gyroBias.x;
+    imu.g.y -= imu.gyroBias.y;
+    imu.g.z -= imu.gyroBias.z;
 
-  else // update orientation
-  {
-    // TODO: update the orientation
-  }
+    float deltaT = 1.0 / imu.gyroODR;
+    eulerAngles.x =
+        prevEulerAngles.x + imu.g.x * deltaT * (imu.mdpsPerLSB / 1000.0);
+    eulerAngles.y =
+        prevEulerAngles.y + imu.g.y * deltaT * (imu.mdpsPerLSB / 1000.0);
+    eulerAngles.z =
+        prevEulerAngles.z + -imu.g.z * deltaT * (imu.mdpsPerLSB / 1000.0);
 
+    float rollAcc = atan2(imu.a.y, imu.a.z) * (180.0 / M_PI);
+    float pitchAcc =
+        atan2(-imu.a.x, sqrt(imu.a.y * imu.a.y + imu.a.z * imu.a.z)) *
+        (180.0 / M_PI);
+
+    float alpha = 0.98;
+    eulerAngles.x = alpha * eulerAngles.x + (1 - alpha) * rollAcc;  // Roll
+    eulerAngles.y = alpha * eulerAngles.y + (1 - alpha) * pitchAcc; // Pitch
+
+    currentHeading = eulerAngles.z;
+
+    if (currentHeading < 0)
+      currentHeading = 360 + fmod(eulerAngles.z, 360);
+    else
+      currentHeading = fmod(eulerAngles.z, 360);
+  }
 #ifdef __IMU_DEBUG__
+  Serial.print("Current roll: ");
   Serial.println(eulerAngles.z);
+  Serial.print("Current heading: ");
+  Serial.println(currentHeading);
 #endif
 }
 
@@ -90,9 +138,8 @@ void Robot::EnterLineFollowing(float speed) {
   Serial.println(" -> LINING");
   baseSpeed = speed;
   robotState = ROBOT_LINING;
-
-  elapsedTime = 0;
   prevError = 0;
+
   ResetElapsedDistance();
 }
 
@@ -104,16 +151,21 @@ void Robot::ResetElapsedDistance() {
   elapsedDistanceSetPoint = chassis.GetDistanceElapsed();
 }
 
-int eStopTicks = 0;
-void Robot::LineFollowingUpdate(void) {
+uint8_t eStopTicks = 0;
+void Robot::LineFollowingUpdate(bool invert) {
   if (robotState == ROBOT_LINING) {
-    float lineError = lineSensor.CalcError() / 1023.0;
+    float lineError =
+        (invert ? -lineSensor.CalcError() : lineSensor.CalcError()) / 1023.0;
     float derivative = (lineError - prevError);
 
-    if (lineSensor.ReadLeft() < 55 && lineSensor.ReadRight() < 55) {
-      eStopTicks++;
-      //      emergencyKp += 0.1;
+    bool leftOffLine =
+        invert ? lineSensor.ReadLeft() > 800 : lineSensor.ReadLeft() < 200;
+    bool rightOffLine =
+        invert ? lineSensor.ReadRight() > 800 : lineSensor.ReadRight() < 200;
 
+    if (leftOffLine && rightOffLine) {
+      eStopTicks++;
+      emergencyKp += 0.1;
     } else {
       eStopTicks = 0;
     }
@@ -124,10 +176,12 @@ void Robot::LineFollowingUpdate(void) {
       return;
     }
 
-    float turnEffort = lineError * (lineKp + emergencyKp) + derivative * lineKd;
+    float lineError2 = lineError * abs(lineError);
+
+    float turnEffort = lineError * (lineKp + emergencyKp) +
+                       lineKp2 * lineError2 + derivative * lineKd;
 
     chassis.SetTwist(baseSpeed, turnEffort);
-
     prevError = lineError;
   }
 }
@@ -141,55 +195,6 @@ void Robot::PrintLapStats() {
   Serial.print("\nLAP SPEED: ");
   Serial.print(lapDistance / lastLapTime);
   Serial.println("cm/s");
-}
-
-/**
- * As coded, HandleIntersection will make the robot drive out 3 intersections,
- * turn around, and stop back at the start. You will need to change the
- * behaviour accordingly.
- */
-void Robot::HandleIntersection(void) {
-  Serial.print("X: ");
-  if (robotState == ROBOT_LINING) {
-    switch (nodeTo) {
-    case NODE_START:
-      if (nodeFrom == NODE_1)
-        EnterIdleState();
-      break;
-    case NODE_1:
-      // By default, we'll continue on straight
-      if (nodeFrom == NODE_START) {
-        nodeTo = NODE_2;
-      } else if (nodeFrom == NODE_2) {
-        nodeTo = NODE_START;
-      }
-      nodeFrom = NODE_1;
-      break;
-    case NODE_2:
-      // By default, we'll continue on straight
-      if (nodeFrom == NODE_1) {
-        nodeTo = NODE_3;
-      } else if (nodeFrom == NODE_3) {
-        nodeTo = NODE_1;
-      }
-      nodeFrom = NODE_2;
-      break;
-    case NODE_3:
-      // By default, we'll bang a u-ey
-      if (nodeFrom == NODE_2) {
-        nodeTo = NODE_2;
-        nodeFrom = NODE_3;
-        EnterTurn(180);
-      }
-      break;
-    default:
-      break;
-    }
-    Serial.print(nodeFrom);
-    Serial.print("->");
-    Serial.print(nodeTo);
-    Serial.print('\n');
-  }
 }
 
 void Robot::RobotLoop(void) {
@@ -211,41 +216,13 @@ void Robot::RobotLoop(void) {
    */
   if (chassis.CheckChassisTimer()) {
     // add synchronous, pre-motor-update actions here
-    if (robotState == ROBOT_LINING) {
-      if (elapsedTime == 0)
-        elapsedTime = millis();
 
-      Serial.print("Distance: ");
-      Serial.print(chassis.GetDistanceElapsed());
-      Serial.print("\nTime: ");
-      Serial.print((millis() - elapsedTime) / 1000);
-      Serial.print("\n");
-
-      if (GetDistanceElapsed() > lapDistance) {
-        EnterIdleState();
-        ResetElapsedDistance();
-
-        lastLapTime = (millis() - elapsedTime) / 1000;
-
-        PrintLapStats();
-
-        elapsedTime = 0;
-      }
-      LineFollowingUpdate();
-    }
-
+    HandleAutonRoutine(robotAutonRoutine);
     chassis.UpdateMotors();
-
-    // add synchronous, post-motor-update actions here
   }
 
-  /**
-   * Check for any intersections
-   */
-  // if (lineSensor.CheckIntersection())
-  //   HandleIntersection();
-  // if (CheckTurnComplete())
-  //   HandleTurnComplete();
+  if (CheckTurnComplete())
+    HandleTurnComplete();
 
   /**
    * Check for an IMU update

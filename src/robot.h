@@ -1,4 +1,5 @@
 #pragma once
+#include "IRdecoder.h"
 #include "chassis.h"
 #include <LSM6.h>
 #include <LineSensor.h>
@@ -6,8 +7,9 @@
 class Robot {
 protected:
   float prevError = 0.0;
-  float lineKp = 1.85;
-  float lineKd = 0.1;
+  float lineKp = 1.5;
+  float lineKp2 = 0;
+  float lineKd = 0.0;
   float emergencyKp = 0.0;
 
   unsigned long lastLapTime = 0;
@@ -25,7 +27,16 @@ protected:
     CTRL_AUTO,
     CTRL_SETUP,
   };
+
+  enum ROBOT_AUTON_ROUTINE {
+    ROUTINE_NONE,
+    ROUTINE_LINE_FOLLOWER,
+    ROUTINE_TIMED_LAP,
+    ROUTINE_MANHATTANER
+  };
+
   ROBOT_CTRL_MODE robotCtrlMode = CTRL_TELEOP;
+  ROBOT_AUTON_ROUTINE robotAutonRoutine = ROUTINE_NONE;
 
   /**
    * robotState is used to track the current task of the robot. You will add new
@@ -35,6 +46,8 @@ protected:
     ROBOT_IDLE,
     ROBOT_LINING,
     ROBOT_TURNING,
+    ROBOT_MANUAL,
+    ROBOT_ARRIVED
   };
   ROBOT_STATE robotState = ROBOT_IDLE;
 
@@ -43,6 +56,8 @@ protected:
 
   /* Line sensor */
   LineSensor lineSensor;
+
+  /* Buzzer */
 
   /* To add later: rangefinder, camera, etc.*/
 
@@ -60,8 +75,16 @@ protected:
   /* targetHeading is used for commanding the robot to turn */
   float targetHeading;
 
+  float currentHeading;
+
   /* baseSpeed is used to drive at a given speed while, say, line following.*/
   float baseSpeed = 0;
+
+  int8_t currDirection;
+  int8_t targetDirection;
+  long idleTime = 0;
+
+  enum DIRECTION { EAST = 0, NORTH = 1, WEST = 2, SOUTH = 3 };
 
   /**
    * For tracking the motion of the Romi. We keep track of the intersection we
@@ -96,20 +119,24 @@ protected:
   void EnterAutoMode(void);
   void EnterSetupMode(void);
 
+  void HandleAutonRoutine(ROBOT_AUTON_ROUTINE routine);
+
   /**
    * Line following and navigation routines.
    */
   void EnterLineFollowing(float speed);
-  void LineFollowingUpdate(void);
+  void LineFollowingUpdate(bool invert);
+
+  void ManhattanerUpdate(void);
+  void TimedLapUpdate(void);
 
   void PrintLapStats();
   float GetDistanceElapsed();
   void ResetElapsedDistance();
 
-  bool CheckIntersection(void) { return lineSensor.CheckIntersection(); }
   void HandleIntersection(void);
 
-  void EnterTurn(float angleInDeg);
+  void EnterTurn(float angle);
   bool CheckTurnComplete(void);
   void HandleTurnComplete(void);
 

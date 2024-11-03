@@ -1,7 +1,7 @@
 #include "LineSensor.h"
 #include "Arduino.h"
 
-#define DARK_THRESHOLD 500;
+#define DARK_THRESHOLD 250;
 
 void LineSensor::Initialize(void) {
   pinMode(reflectivityPins[0], INPUT);
@@ -23,41 +23,48 @@ int16_t LineSensor::CalcError(void) {
       analogRead(reflectivityPins[1]) - analogRead(reflectivityPins[4]);
   int16_t innerError =
       analogRead(reflectivityPins[2]) - analogRead(reflectivityPins[3]);
-  //
-  // Serial.print("1:");
-  // Serial.println(analogRead(reflectivityPins[0]));
-  // Serial.print("2:");
-  // Serial.println(analogRead(reflectivityPins[1]));
-  // Serial.print("3:");
-  // Serial.println(analogRead(reflectivityPins[2]));
-  // Serial.print("4:");
-  // Serial.println(analogRead(reflectivityPins[3]));
-  // Serial.print("5:");
-  // Serial.println(analogRead(reflectivityPins[4]));
-  // Serial.print("6:");
-  // Serial.println(analogRead(reflectivityPins[5]));
-  //
-  // Serial.print("Outer: ");
-  // Serial.println(outerError);
-  // Serial.print("Middle: ");
-  // Serial.println(middleError);
-  // Serial.print("Inner: ");
-  // Serial.println(innerError);
-  //
-  return (outerError * 0.4) + (middleError * 0.2) + (innerError * 0.4);
+
+#ifdef __LINE_DEBUG__
+  Serial.print("1:");
+  Serial.println(analogRead(reflectivityPins[0]));
+  Serial.print("2:");
+  Serial.println(analogRead(reflectivityPins[1]));
+  Serial.print("3:");
+  Serial.println(analogRead(reflectivityPins[2]));
+  Serial.print("4:");
+  Serial.println(analogRead(reflectivityPins[3]));
+  Serial.print("5:");
+  Serial.println(analogRead(reflectivityPins[4]));
+  Serial.print("6:");
+  Serial.println(analogRead(reflectivityPins[5]));
+
+  Serial.print("Outer: ");
+  Serial.println(outerError);
+  Serial.print("Middle: ");
+  Serial.println(middleError);
+  Serial.print("Inner: ");
+  Serial.println(innerError);
+#endif
+
+  return ((outerError * 0.70) + (middleError * 0.15) + (innerError * 0.15));
 }
 
-// bool LineSensor::CheckIntersection(void) {
-//   bool retVal = false;
-//
-//   bool isLeftDark = analogRead(leftSensorPin) > DARK_THRESHOLD;
-//   bool isRightDark = analogRead(rightSensorPin) > DARK_THRESHOLD;
-//
-//   bool onIntersection = isLeftDark && isRightDark;
-//   if (onIntersection && !prevOnIntersection)
-//     retVal = true;
-//
-//   prevOnIntersection = onIntersection;
-//
-//   return retVal;
-// }
+bool LineSensor::CheckIntersection(bool invert) {
+  bool onIntersection = false;
+
+  if (invert) {
+    bool isLeftDark = analogRead(reflectivityPins[0]) < DARK_THRESHOLD;
+    bool isRightDark = analogRead(reflectivityPins[5]) < DARK_THRESHOLD;
+
+    onIntersection = isLeftDark && isRightDark;
+
+  } else {
+    bool isLeftDark = analogRead(reflectivityPins[0]) > DARK_THRESHOLD;
+    bool isRightDark = analogRead(reflectivityPins[5]) > DARK_THRESHOLD;
+
+    onIntersection = isLeftDark && isRightDark;
+  }
+
+  prevOnIntersection = onIntersection;
+  return onIntersection;
+}
