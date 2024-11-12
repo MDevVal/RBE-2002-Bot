@@ -1,7 +1,7 @@
 #include "LineSensor.h"
 #include "Arduino.h"
 
-#define DARK_THRESHOLD 250;
+#define DARK_THRESHOLD 770;
 
 void LineSensor::Initialize(void) {
   pinMode(reflectivityPins[0], INPUT);

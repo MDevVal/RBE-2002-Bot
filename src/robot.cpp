@@ -15,12 +15,16 @@ void Robot::InitializeRobot(void) {
    * Initialize the IMU and set the rate and scale to reasonable values.
    */
   imu.init();
-  imu.setGyroDataOutputRate(LSM6::ODR::ODR208);
-  imu.setFullScaleGyro(LSM6::GYRO_FS::GYRO_FS1000);
-
+  // imu.setGyroDataOutputRate(LSM6::ODR::ODR104);
+  // imu.setFullScaleGyro(LSM6::GYRO_FS::GYRO_FS2000);
+  // imu.setAccDataOutputRate(LSM6::ODR::ODR104);
+  // imu.setFullScaleAcc(LSM6::ACC_FS::ACC_FS8);
+  //
   // The line sensor elements default to INPUTs, but we'll initialize anyways,
   // for completeness
   lineSensor.Initialize();
+
+  pinMode(A7, OUTPUT);
 }
 
 void Robot::EnterIdleState(void) {
@@ -56,20 +60,8 @@ void Robot::EnterTurn(float angle) {
 int lastTime = 0;
 bool Robot::CheckTurnComplete(void) {
   bool retVal = false;
-
-  if (robotState != ROBOT_TURNING)
-    return retVal;
-
-  if (millis() - lastTime > 0) {
-    lastTime = millis();
-    Serial.print("Current: ");
-    Serial.println(currentHeading);
-    Serial.print("Target: ");
-    Serial.println(targetHeading);
-  }
-
   if (robotState == ROBOT_TURNING) {
-    if (abs(currentHeading - targetHeading) <= 0.1) {
+    if (abs(currentHeading - targetHeading) <= 2.5) {
       EnterIdleState();
       retVal = true;
     }
@@ -80,6 +72,7 @@ bool Robot::CheckTurnComplete(void) {
 
 void Robot::HandleTurnComplete(void) { EnterIdleState(); }
 
+long lastOrientationUpdate = 0;
 /**
  * Here is a good example of handling information differently, depending on
  * the state. If the Romi is not moving, we can update the bias (but be
@@ -94,27 +87,38 @@ void Robot::HandleOrientationUpdate(void) {
       imu.updateGyroBias();
     }
   } else {
-    // Subtract gyro bias
     imu.g.x -= imu.gyroBias.x;
     imu.g.y -= imu.gyroBias.y;
     imu.g.z -= imu.gyroBias.z;
 
     float deltaT = 1.0 / imu.gyroODR;
-    eulerAngles.x =
-        prevEulerAngles.x + imu.g.x * deltaT * (imu.mdpsPerLSB / 1000.0);
-    eulerAngles.y =
-        prevEulerAngles.y + imu.g.y * deltaT * (imu.mdpsPerLSB / 1000.0);
-    eulerAngles.z =
-        prevEulerAngles.z + -imu.g.z * deltaT * (imu.mdpsPerLSB / 1000.0);
+    float accelScale = imu.mgPerLSB / 1000.0;
 
-    float rollAcc = atan2(imu.a.y, imu.a.z) * (180.0 / M_PI);
-    float pitchAcc =
-        atan2(-imu.a.x, sqrt(imu.a.y * imu.a.y + imu.a.z * imu.a.z)) *
-        (180.0 / M_PI);
+    float accelRoll =
+        atan2(imu.a.y * accelScale, imu.a.z * accelScale) * 180.0 / M_PI;
+    float accelPitch =
+        atan2(imu.a.x * accelScale,
+              sqrt(pow(imu.a.x, 2) + pow(imu.a.z, 2)) * accelScale) *
+        180.0 / M_PI;
 
-    float alpha = 0.98;
-    eulerAngles.x = alpha * eulerAngles.x + (1 - alpha) * rollAcc;  // Roll
-    eulerAngles.y = alpha * eulerAngles.y + (1 - alpha) * pitchAcc; // Pitch
+    float gyroScale = imu.mdpsPerLSB / 1000.0;
+
+    float unfiltered = eulerAngles.y + imu.g.y * deltaT * gyroScale;
+
+    Serial.print("Unfiltered:");
+    Serial.println(unfiltered);
+
+    float kappa = 0.98;
+
+    eulerAngles.x = kappa * (eulerAngles.x + imu.g.x * deltaT * gyroScale) +
+                    (1 - kappa) * accelRoll;
+    eulerAngles.y = kappa * (eulerAngles.y + imu.g.y * deltaT * gyroScale) +
+                    (1 - kappa) * accelPitch;
+
+    Serial.print("Filtered:");
+    Serial.println(eulerAngles.y);
+
+    eulerAngles.z = eulerAngles.z + -imu.g.z * deltaT * gyroScale;
 
     currentHeading = eulerAngles.z;
 
@@ -122,13 +126,16 @@ void Robot::HandleOrientationUpdate(void) {
       currentHeading = 360 + fmod(eulerAngles.z, 360);
     else
       currentHeading = fmod(eulerAngles.z, 360);
-  }
+
 #ifdef __IMU_DEBUG__
-  Serial.print("Current roll: ");
-  Serial.println(eulerAngles.z);
-  Serial.print("Current heading: ");
-  Serial.println(currentHeading);
+    Serial.print("x: ");
+    Serial.print(imu.a.x);
+    Serial.print(" y: ");
+    Serial.print(imu.a.y);
+    Serial.print(" z: ");
+    Serial.println(imu.a.z);
 #endif
+  }
 }
 
 /**
@@ -162,19 +169,19 @@ void Robot::LineFollowingUpdate(bool invert) {
         invert ? lineSensor.ReadLeft() > 800 : lineSensor.ReadLeft() < 200;
     bool rightOffLine =
         invert ? lineSensor.ReadRight() > 800 : lineSensor.ReadRight() < 200;
-
-    if (leftOffLine && rightOffLine) {
-      eStopTicks++;
-      emergencyKp += 0.1;
-    } else {
-      eStopTicks = 0;
-    }
-
-    if (eStopTicks > 25) {
-      chassis.Stop();
-      EnterIdleState();
-      return;
-    }
+    //
+    // if (leftOffLine && rightOffLine) {
+    //   eStopTicks++;
+    //   emergencyKp += 0.1;
+    // } else {
+    //   eStopTicks = 0;
+    // }
+    //
+    // if (eStopTicks > 25) {
+    //   chassis.Stop();
+    //   EnterIdleState();
+    //   return;
+    // }
 
     float lineError2 = lineError * abs(lineError);
 
@@ -220,9 +227,6 @@ void Robot::RobotLoop(void) {
     HandleAutonRoutine(robotAutonRoutine);
     chassis.UpdateMotors();
   }
-
-  if (CheckTurnComplete())
-    HandleTurnComplete();
 
   /**
    * Check for an IMU update

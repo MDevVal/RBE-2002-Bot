@@ -32,7 +32,8 @@ protected:
     ROUTINE_NONE,
     ROUTINE_LINE_FOLLOWER,
     ROUTINE_TIMED_LAP,
-    ROUTINE_MANHATTANER
+    ROUTINE_MANHATTANER,
+    ROUTINE_RAMPER
   };
 
   ROBOT_CTRL_MODE robotCtrlMode = CTRL_TELEOP;
@@ -129,6 +130,7 @@ protected:
 
   void ManhattanerUpdate(void);
   void TimedLapUpdate(void);
+  void RamperUpdate();
 
   void PrintLapStats();
   float GetDistanceElapsed();

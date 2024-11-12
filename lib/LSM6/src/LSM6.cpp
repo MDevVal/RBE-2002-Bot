@@ -1,3 +1,4 @@
+#include "Arduino.h"
 #include <LSM6.h>
 #include <Wire.h>
 #include <math.h>
@@ -28,11 +29,13 @@ LSM6::LSM6(void) {
 bool LSM6::checkForNewData(void) {
   bool retVal = false;
 
+  digitalWrite(A7, HIGH);
   if (getStatus() & 0x02) {
     read();
 
     retVal = true;
   }
+  digitalWrite(A7, LOW);
 
   return retVal;
 }

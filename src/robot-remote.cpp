@@ -50,9 +50,15 @@ void Robot::HandleKeyCode(int16_t keyCode) {
     case NUM_3:
       robotAutonRoutine = ROUTINE_MANHATTANER;
       break;
+    case NUM_4:
+      robotAutonRoutine = ROUTINE_NONE;
+      EnterTurn(-90.f);
+      break;
+    case NUM_5:
+      robotAutonRoutine = ROUTINE_RAMPER;
+      break;
     }
   }
-
   /**
    * TELEOP commands
    */

@@ -19,6 +19,9 @@ void Robot::HandleAutonRoutine(ROBOT_AUTON_ROUTINE routine) {
   case ROBOT_AUTON_ROUTINE::ROUTINE_TIMED_LAP:
     TimedLapUpdate();
     break;
+  case ROBOT_AUTON_ROUTINE::ROUTINE_RAMPER:
+    RamperUpdate();
+    break;
   }
 }
 
@@ -44,8 +47,8 @@ void Robot::TimedLapUpdate() {
 
 int currI = 0;
 int currJ = 0;
-int targetI = 2;
-int targetJ = 2;
+int targetI = 1;
+int targetJ = 0;
 bool movingJWard = false;
 bool movingIWard = false;
 float elapsedAngle = 0;
@@ -54,18 +57,10 @@ bool hasIMUCalibrate = false;
 bool prevOnIntersection = false;
 
 void Robot::ManhattanerUpdate() {
-  if (millis() - idleTime > 5000) {
-    hasIMUCalibrate = true;
-  }
-
-  if (!hasIMUCalibrate) {
-    return;
-  }
-
   switch (robotState) {
   case ROBOT_IDLE:
     if (currI < targetI) {
-      EnterLineFollowing(10);
+      EnterLineFollowing(20);
       currI++;
     } else if (currI > targetI) {
       if (!movingIWard) {
@@ -75,7 +70,7 @@ void Robot::ManhattanerUpdate() {
         flipTurns = !flipTurns;
         return;
       }
-      EnterLineFollowing(10);
+      EnterLineFollowing(20);
       currI--;
     } else if (currJ < targetJ) {
       if (!movingJWard) {
@@ -89,7 +84,7 @@ void Robot::ManhattanerUpdate() {
         movingJWard = true;
         return;
       }
-      EnterLineFollowing(10);
+      EnterLineFollowing(20);
       currJ++;
     } else if (currJ > targetJ) {
       if (!movingJWard) {
@@ -103,7 +98,7 @@ void Robot::ManhattanerUpdate() {
         movingJWard = true;
         return;
       }
-      EnterLineFollowing(10);
+      EnterLineFollowing(20);
       currJ--;
     } else {
       if (movingIWard || movingJWard || flipTurns) {
@@ -118,8 +113,11 @@ void Robot::ManhattanerUpdate() {
         elapsedAngle = 0;
         return;
       }
-      targetI = random(0, 5);
-      targetJ = random(0, 2);
+      // targetI = 0;
+      // targetJ = 0;
+
+      robotAutonRoutine = ROBOT_AUTON_ROUTINE::ROUTINE_RAMPER;
+
       Serial.print("New target: ");
       Serial.print(targetI);
       Serial.print(", ");
@@ -142,5 +140,54 @@ void Robot::ManhattanerUpdate() {
       EnterIdleState();
       return;
     }
+    break;
+  case ROBOT_TURNING:
+    if (CheckTurnComplete())
+      HandleTurnComplete();
+    break;
+  }
+}
+
+bool ramping = false;
+bool hasRamped = false;
+bool isAligned = false;
+void Robot::RamperUpdate() {
+  switch (robotState) {
+  case ROBOT_IDLE:
+    if (!isAligned) {
+      EnterTurn(90);
+      isAligned = true;
+      return;
+    }
+    if (!hasRamped) {
+      EnterLineFollowing(20);
+    }
+    break;
+  case ROBOT_TURNING:
+    if (CheckTurnComplete())
+      HandleTurnComplete();
+    break;
+  case ROBOT_LINING:
+    LineFollowingUpdate(true);
+    if (eulerAngles.y > 3.5) {
+      digitalWrite(13, HIGH);
+      ramping = true;
+      hasRamped = true;
+    } else {
+      digitalWrite(13, LOW);
+      ramping = false;
+    }
+
+    if (!ramping && hasRamped) {
+      currI = 3;
+      currJ = -1;
+      targetI = 0;
+      targetJ = 0;
+      EnterIdleState();
+      elapsedAngle = 90;
+      robotAutonRoutine = ROBOT_AUTON_ROUTINE::ROUTINE_MANHATTANER;
+    }
+
+    break;
   }
 }
