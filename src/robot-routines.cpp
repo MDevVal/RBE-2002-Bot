@@ -1,5 +1,7 @@
+#include "openmv.h"
 #include "robot.h"
 
+OpenMV camera;
 void Robot::HandleAutonRoutine(ROBOT_AUTON_ROUTINE routine) {
   switch (routine) {
   case ROBOT_AUTON_ROUTINE::ROUTINE_NONE:
@@ -22,6 +24,9 @@ void Robot::HandleAutonRoutine(ROBOT_AUTON_ROUTINE routine) {
   case ROBOT_AUTON_ROUTINE::ROUTINE_RAMPER:
     RamperUpdate();
     break;
+  case ROBOT_AUTON_ROUTINE::ROUTINE_CHICKEN_HEAD:
+    ChickenHeadUpdate();
+    break;
   }
 }
 
@@ -42,6 +47,25 @@ void Robot::TimedLapUpdate() {
     elapsedTime = 0;
   } else {
     LineFollowingUpdate(false);
+  }
+}
+
+void Robot::FindAprilTags(void) {
+  AprilTagDatum tag;
+  if (camera.checkUART(tag)) {
+    Serial.print(F("Tag [cx="));
+    Serial.print(tag.cx);
+    Serial.print(F(", cy="));
+    Serial.print(tag.cy);
+    Serial.print(F(", w="));
+    Serial.print(tag.w);
+    Serial.print(F(", h="));
+    Serial.print(tag.h);
+    Serial.print(F(", id="));
+    Serial.print(tag.id);
+    Serial.print(F(", rot="));
+    Serial.print(tag.rot);
+    Serial.println(F("]"));
   }
 }
 
@@ -189,5 +213,29 @@ void Robot::RamperUpdate() {
     }
 
     break;
+  }
+}
+
+const int desired_cx = 100;     // Desired center x-coordinate
+const int desired_w = 50;       // Desired tag width for distance control
+const float angularKp = 0.025f; // Proportional gain for rotation
+const float linearKp = 0.5f;    // Proportional gain for forward movement
+
+void Robot::ChickenHeadUpdate() {
+  AprilTagDatum tag;
+
+  if (camera.checkUART(tag)) {
+
+    int error_x = tag.cx - desired_cx;
+    int error_w = (desired_w - tag.w);
+
+    float rotSpeed = angularKp * error_x;
+    float forwardSpeed = -linearKp * error_w;
+
+    Serial.print("Rot Speed: ");
+    Serial.print(rotSpeed);
+    Serial.print(" Forward Speed: ");
+    Serial.println(forwardSpeed);
+    chassis.SetTwist(forwardSpeed, rotSpeed);
   }
 }

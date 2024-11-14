@@ -33,7 +33,8 @@ protected:
     ROUTINE_LINE_FOLLOWER,
     ROUTINE_TIMED_LAP,
     ROUTINE_MANHATTANER,
-    ROUTINE_RAMPER
+    ROUTINE_RAMPER,
+    ROUTINE_CHICKEN_HEAD,
   };
 
   ROBOT_CTRL_MODE robotCtrlMode = CTRL_TELEOP;
@@ -131,6 +132,7 @@ protected:
   void ManhattanerUpdate(void);
   void TimedLapUpdate(void);
   void RamperUpdate();
+  void ChickenHeadUpdate();
 
   void PrintLapStats();
   float GetDistanceElapsed();
@@ -147,4 +149,6 @@ protected:
 
   /* For commanding the lifter servo */
   void SetLifter(uint16_t position);
+
+  void FindAprilTags();
 };

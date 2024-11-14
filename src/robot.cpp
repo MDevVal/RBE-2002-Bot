@@ -15,16 +15,18 @@ void Robot::InitializeRobot(void) {
    * Initialize the IMU and set the rate and scale to reasonable values.
    */
   imu.init();
-  // imu.setGyroDataOutputRate(LSM6::ODR::ODR104);
-  // imu.setFullScaleGyro(LSM6::GYRO_FS::GYRO_FS2000);
-  // imu.setAccDataOutputRate(LSM6::ODR::ODR104);
-  // imu.setFullScaleAcc(LSM6::ACC_FS::ACC_FS8);
+  imu.setGyroDataOutputRate(LSM6::ODR::ODR104);
+  imu.setFullScaleGyro(LSM6::GYRO_FS::GYRO_FS2000);
+  imu.setAccDataOutputRate(LSM6::ODR::ODR104);
+  imu.setFullScaleAcc(LSM6::ACC_FS::ACC_FS8);
   //
   // The line sensor elements default to INPUTs, but we'll initialize anyways,
   // for completeness
   lineSensor.Initialize();
 
   pinMode(A7, OUTPUT);
+
+  Serial1.begin(115200);
 }
 
 void Robot::EnterIdleState(void) {
@@ -103,21 +105,14 @@ void Robot::HandleOrientationUpdate(void) {
 
     float gyroScale = imu.mdpsPerLSB / 1000.0;
 
-    float unfiltered = eulerAngles.y + imu.g.y * deltaT * gyroScale;
+    float kappa = 0.02;
 
-    Serial.print("Unfiltered:");
-    Serial.println(unfiltered);
-
-    float kappa = 0.98;
-
-    eulerAngles.x = kappa * (eulerAngles.x + imu.g.x * deltaT * gyroScale) +
-                    (1 - kappa) * accelRoll;
-    eulerAngles.y = kappa * (eulerAngles.y + imu.g.y * deltaT * gyroScale) +
-                    (1 - kappa) * accelPitch;
-
-    Serial.print("Filtered:");
-    Serial.println(eulerAngles.y);
-
+    eulerAngles.x =
+        (1 - kappa) * (eulerAngles.x + imu.g.x * deltaT * gyroScale) +
+        kappa * accelRoll;
+    eulerAngles.y =
+        (1 - kappa) * (eulerAngles.y + imu.g.y * deltaT * gyroScale) +
+        kappa * accelPitch;
     eulerAngles.z = eulerAngles.z + -imu.g.z * deltaT * gyroScale;
 
     currentHeading = eulerAngles.z;
@@ -205,6 +200,7 @@ void Robot::PrintLapStats() {
 }
 
 void Robot::RobotLoop(void) {
+
   /**
    * The main loop for your robot. Process both synchronous events (motor
    * control), and asynchronous events (IR presses, distance readings, etc.).
@@ -231,6 +227,7 @@ void Robot::RobotLoop(void) {
   /**
    * Check for an IMU update
    */
+
   if (imu.checkForNewData()) {
     HandleOrientationUpdate();
   }

@@ -29,8 +29,8 @@ LSM6::LSM6(void) {
 bool LSM6::checkForNewData(void) {
   bool retVal = false;
 
-  digitalWrite(A7, HIGH);
   if (getStatus() & 0x02) {
+    digitalWrite(A7, HIGH);
     read();
 
     retVal = true;

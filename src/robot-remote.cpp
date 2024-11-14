@@ -57,6 +57,9 @@ void Robot::HandleKeyCode(int16_t keyCode) {
     case NUM_5:
       robotAutonRoutine = ROUTINE_RAMPER;
       break;
+    case NUM_6:
+      robotAutonRoutine = ROUTINE_CHICKEN_HEAD;
+      break;
     }
   }
   /**
