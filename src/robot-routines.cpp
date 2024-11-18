@@ -25,7 +25,15 @@ void Robot::HandleAutonRoutine(ROBOT_AUTON_ROUTINE routine) {
     RamperUpdate();
     break;
   case ROBOT_AUTON_ROUTINE::ROUTINE_CHICKEN_HEAD:
-    ChickenHeadUpdate();
+    switch (robotState) {
+    case ROBOT_TRACKING:
+      Robot::TrackingUpdate();
+      break;
+
+    case ROBOT_SEARCHING:
+      Robot::SearchingUpdate();
+      break;
+    }
     break;
   }
 }
@@ -216,26 +224,56 @@ void Robot::RamperUpdate() {
   }
 }
 
-const int desired_cx = 100;     // Desired center x-coordinate
-const int desired_w = 50;       // Desired tag width for distance control
-const float angularKp = 0.025f; // Proportional gain for rotation
-const float linearKp = 0.5f;    // Proportional gain for forward movement
+const int desired_cx = 100; // Desired center x-coordinate
+const int desired_w = 50;   // Desired tag width for distance control
+const float angularKp = 0.025f;
+const float linearKp = 0.5f;
 
-void Robot::ChickenHeadUpdate() {
+const unsigned long TAG_LOST_TIMEOUT = 2000;
+unsigned long tagLostTime = 0;
+bool tagWasVisible = true;
+
+void Robot::TrackingUpdate() {
   AprilTagDatum tag;
 
   if (camera.checkUART(tag)) {
+    tagWasVisible = true;
+    tagLostTime = 0;
 
     int error_x = tag.cx - desired_cx;
-    int error_w = (desired_w - tag.w);
+    int error_w = desired_w - tag.w;
 
     float rotSpeed = angularKp * error_x;
     float forwardSpeed = -linearKp * error_w;
 
-    Serial.print("Rot Speed: ");
-    Serial.print(rotSpeed);
-    Serial.print(" Forward Speed: ");
-    Serial.println(forwardSpeed);
     chassis.SetTwist(forwardSpeed, rotSpeed);
+  } else {
+    if (tagWasVisible) {
+      tagWasVisible = false;
+      tagLostTime = millis();
+      chassis.Stop();
+    } else {
+      unsigned long currentTime = millis();
+      if (currentTime - tagLostTime >= TAG_LOST_TIMEOUT) {
+        robotState = ROBOT_SEARCHING;
+        Serial.println("Tag lost for 2 seconds. Switching to SEARCHING mode.");
+      } else {
+        chassis.Stop();
+      }
+    }
+  }
+}
+
+void Robot::SearchingUpdate() {
+  AprilTagDatum tag;
+
+  float searchRotSpeed = 0.2f;
+  float forwardSpeed = 0.0f;
+
+  chassis.SetTwist(forwardSpeed, searchRotSpeed);
+
+  if (camera.checkUART(tag)) {
+    chassis.Stop();
+    robotState = ROBOT_TRACKING;
   }
 }

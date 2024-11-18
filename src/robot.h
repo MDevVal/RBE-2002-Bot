@@ -49,7 +49,9 @@ protected:
     ROBOT_LINING,
     ROBOT_TURNING,
     ROBOT_MANUAL,
-    ROBOT_ARRIVED
+    ROBOT_ARRIVED,
+    ROBOT_TRACKING,
+    ROBOT_SEARCHING
   };
   ROBOT_STATE robotState = ROBOT_IDLE;
 
@@ -132,7 +134,8 @@ protected:
   void ManhattanerUpdate(void);
   void TimedLapUpdate(void);
   void RamperUpdate();
-  void ChickenHeadUpdate();
+  void TrackingUpdate();
+  void SearchingUpdate();
 
   void PrintLapStats();
   float GetDistanceElapsed();
