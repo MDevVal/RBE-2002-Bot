@@ -216,6 +216,12 @@
         "output": ".pio/build/a-star32U4/libc99/LineSensor/LineSensor.cpp.o"
     },
     {
+        "command": "/home/benni/.platformio/packages/toolchain-atmelavr/bin/avr-g++ -o .pio/build/a-star32U4/src/chickening.cpp.o -c -fno-exceptions -fno-threadsafe-statics -fpermissive -std=gnu++11 -mmcu=atmega32u4 -Os -Wall -ffunction-sections -fdata-sections -flto -DPLATFORMIO=60116 -DARDUINO_AVR_A_STAR_32U4 -D__IMU_DEBUG__ -DF_CPU=16000000L -DARDUINO_ARCH_AVR -DARDUINO=10808 -DUSB_VID=0x1ffb -DUSB_PID=0x2300 \"-DUSB_PRODUCT=\\\"Pololu A-Star 32U4\\\"\" \"-DUSB_MANUFACTURER=\\\"Pololu Corporation\\\"\" -Iinclude -Isrc -Ilib/LineSensor/src -Ilib/Romi32U4Motors/src -Ilib/Chassis/src -Ilib/LSM6/src -I.pio/libdeps/a-star32U4/openmv-apriltags/src -I.pio/libdeps/a-star32U4/event_timer/src -I.pio/libdeps/a-star32U4/IRDecoder/src -I.pio/libdeps/a-star32U4/Romi-32u4-utilities/src -I/home/benni/.platformio/packages/framework-arduino-avr/libraries/Wire/src -I/home/benni/.platformio/packages/framework-arduino-avr/cores/arduino -I/home/benni/.platformio/packages/framework-arduino-avr/variants/leonardo src/chickening.cpp",
+        "directory": "/home/benni/RBE-2002-Bot",
+        "file": "src/chickening.cpp",
+        "output": ".pio/build/a-star32U4/src/chickening.cpp.o"
+    },
+    {
         "command": "/home/benni/.platformio/packages/toolchain-atmelavr/bin/avr-g++ -o .pio/build/a-star32U4/src/main.cpp.o -c -fno-exceptions -fno-threadsafe-statics -fpermissive -std=gnu++11 -mmcu=atmega32u4 -Os -Wall -ffunction-sections -fdata-sections -flto -DPLATFORMIO=60116 -DARDUINO_AVR_A_STAR_32U4 -D__IMU_DEBUG__ -DF_CPU=16000000L -DARDUINO_ARCH_AVR -DARDUINO=10808 -DUSB_VID=0x1ffb -DUSB_PID=0x2300 \"-DUSB_PRODUCT=\\\"Pololu A-Star 32U4\\\"\" \"-DUSB_MANUFACTURER=\\\"Pololu Corporation\\\"\" -Iinclude -Isrc -Ilib/LineSensor/src -Ilib/Romi32U4Motors/src -Ilib/Chassis/src -Ilib/LSM6/src -I.pio/libdeps/a-star32U4/openmv-apriltags/src -I.pio/libdeps/a-star32U4/event_timer/src -I.pio/libdeps/a-star32U4/IRDecoder/src -I.pio/libdeps/a-star32U4/Romi-32u4-utilities/src -I/home/benni/.platformio/packages/framework-arduino-avr/libraries/Wire/src -I/home/benni/.platformio/packages/framework-arduino-avr/cores/arduino -I/home/benni/.platformio/packages/framework-arduino-avr/variants/leonardo src/main.cpp",
         "directory": "/home/benni/RBE-2002-Bot",
         "file": "src/main.cpp",
