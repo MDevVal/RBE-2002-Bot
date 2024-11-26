@@ -8,7 +8,7 @@ const int desired_w = 50;   // Desired tag width for distance control
 const float angularKp = 0.025f;
 const float linearKp = 0.5f;
 
-const unsigned long TAG_LOST_TIMEOUT = 2000;
+const unsigned long TAG_LOST_TIMEOUT = 500;
 unsigned long tagLostTime = 0;
 bool tagWasVisible = true;
 
@@ -20,25 +20,25 @@ void Robot::TrackingUpdate() {
     tagLostTime = 0;
 
     int error_x = tag.cx - desired_cx;
-    int error_w = desired_w - tag.w;
+    int error_w = tag.w - desired_w;
 
     float rotSpeed = angularKp * error_x;
-    float forwardSpeed = -linearKp * error_w;
+    float forwardSpeed = linearKp * error_w;
+
+    if (abs(error_x) < 1 && abs(error_w) < 1) {
+      chassis.Stop();
+      robotState = ROBOT_ARRIVED;
+      Serial.println("Arrived at tag. Switching to ARRIVED mode.");
+    }
 
     chassis.SetTwist(forwardSpeed, rotSpeed);
   } else {
     if (tagWasVisible) {
       tagWasVisible = false;
       tagLostTime = millis();
-      chassis.Stop();
-    } else {
-      unsigned long currentTime = millis();
-      if (currentTime - tagLostTime >= TAG_LOST_TIMEOUT) {
-        robotState = ROBOT_SEARCHING;
-        Serial.println("Tag lost for 2 seconds. Switching to SEARCHING mode.");
-      } else {
-        chassis.Stop();
-      }
+    } else if (millis() - tagLostTime >= TAG_LOST_TIMEOUT) {
+      robotState = ROBOT_SEARCHING;
+      Serial.println("Tag lost for 2 seconds. Switching to SEARCHING mode.");
     }
   }
 }
@@ -46,7 +46,7 @@ void Robot::TrackingUpdate() {
 void Robot::SearchingUpdate() {
   AprilTagDatum tag;
 
-  float searchRotSpeed = 0.2f;
+  float searchRotSpeed = 1.f;
   float forwardSpeed = 0.0f;
 
   chassis.SetTwist(forwardSpeed, searchRotSpeed);

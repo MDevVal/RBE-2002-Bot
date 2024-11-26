@@ -1,11 +1,15 @@
 #pragma once
 #include "IRdecoder.h"
 #include "chassis.h"
+#include <HX711.h>
 #include <LSM6.h>
 #include <LineSensor.h>
+#include <servo32u4.h>
 
 class Robot {
 protected:
+  HX711<6, 13> loadCellHX1;
+
   float prevError = 0.0;
   float lineKp = 1.5;
   float lineKp2 = 0;
@@ -64,6 +68,7 @@ protected:
   /* Buzzer */
 
   /* To add later: rangefinder, camera, etc.*/
+  Servo32U4Pin5 lifterServo;
 
   // For managing key presses
   String keyString;
@@ -143,6 +148,8 @@ protected:
 
   void HandleIntersection(void);
 
+  void ReadLoadCell();
+
   void EnterTurn(float angle);
   bool CheckTurnComplete(void);
   void HandleTurnComplete(void);
@@ -152,6 +159,8 @@ protected:
 
   /* For commanding the lifter servo */
   void SetLifter(uint16_t position);
+
+  void PickupAndMeasureTrash();
 
   void FindAprilTags();
 };

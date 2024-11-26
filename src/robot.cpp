@@ -22,9 +22,11 @@ void Robot::InitializeRobot(void) {
   //
   // The line sensor elements default to INPUTs, but we'll initialize anyways,
   // for completeness
-  lineSensor.Initialize();
+  // lineSensor.Initialize();
 
-  pinMode(A7, OUTPUT);
+  // lifterServo.attach();
+
+  loadCellHX1.Init();
 
   Serial1.begin(115200);
 }
@@ -200,7 +202,6 @@ void Robot::PrintLapStats() {
 }
 
 void Robot::RobotLoop(void) {
-
   /**
    * The main loop for your robot. Process both synchronous events (motor
    * control), and asynchronous events (IR presses, distance readings, etc.).
@@ -224,11 +225,15 @@ void Robot::RobotLoop(void) {
     chassis.UpdateMotors();
   }
 
+  // /* Update the lifter servo */
+  lifterServo.update();
+
   /**
    * Check for an IMU update
    */
-
   if (imu.checkForNewData()) {
     HandleOrientationUpdate();
   }
+
+  ReadLoadCell();
 }

@@ -24,6 +24,9 @@ void Robot::HandleAutonRoutine(ROBOT_AUTON_ROUTINE routine) {
     break;
   case ROBOT_AUTON_ROUTINE::ROUTINE_CHICKEN_HEAD:
     switch (robotState) {
+    case ROBOT_IDLE:
+      robotState = ROBOT_SEARCHING;
+      break;
     case ROBOT_TRACKING:
       Robot::TrackingUpdate();
       break;
@@ -31,8 +34,10 @@ void Robot::HandleAutonRoutine(ROBOT_AUTON_ROUTINE routine) {
     case ROBOT_SEARCHING:
       Robot::SearchingUpdate();
       break;
+    case Robot::ROBOT_ARRIVED:
+      Robot::PickupAndMeasureTrash();
+      break;
     }
-    break;
   }
 }
 

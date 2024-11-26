@@ -30,12 +30,10 @@ bool LSM6::checkForNewData(void) {
   bool retVal = false;
 
   if (getStatus() & 0x02) {
-    digitalWrite(A7, HIGH);
     read();
 
     retVal = true;
   }
-  digitalWrite(A7, LOW);
 
   return retVal;
 }

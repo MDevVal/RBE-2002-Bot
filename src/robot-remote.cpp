@@ -14,6 +14,7 @@
 #define IR_PIN 17
 IRDecoder decoder(IR_PIN);
 
+uint16_t lifterPulseLengthUS = 0;
 void Robot::HandleKeyCode(int16_t keyCode) {
   Serial.println(keyCode);
 
@@ -52,7 +53,6 @@ void Robot::HandleKeyCode(int16_t keyCode) {
       break;
     case NUM_4:
       robotAutonRoutine = ROUTINE_NONE;
-      EnterTurn(-90.f);
       break;
     case NUM_5:
       robotAutonRoutine = ROUTINE_RAMPER;
@@ -69,7 +69,8 @@ void Robot::HandleKeyCode(int16_t keyCode) {
     switch (keyCode) {
     case UP_ARROW:
       robotState = ROBOT_MANUAL;
-      chassis.SetTwist(10, 0);
+      //      chassis.SetTwist(10, 0);
+      SetLifter(35);
       break;
     case RIGHT_ARROW:
       robotState = ROBOT_MANUAL;
@@ -77,7 +78,8 @@ void Robot::HandleKeyCode(int16_t keyCode) {
       break;
     case DOWN_ARROW:
       robotState = ROBOT_MANUAL;
-      chassis.SetTwist(-10, 0);
+      SetLifter(0);
+      //       chassis.SetTwist(-10, 0);
       break;
     case LEFT_ARROW:
       robotState = ROBOT_MANUAL;
