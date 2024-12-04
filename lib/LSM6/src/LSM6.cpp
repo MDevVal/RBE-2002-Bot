@@ -361,3 +361,4 @@ int16_t LSM6::testReg(uint8_t address, regAddr reg)
   {
     return TEST_REG_ERROR;
   }
+}

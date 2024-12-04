@@ -2,6 +2,7 @@
 #include "chassis.h"
 #include <LineSensor.h>
 #include <LSM6.h>
+#include <PID.h>
 
 class Robot
 {
@@ -44,6 +45,7 @@ protected:
     LineSensor lineSensor;
 
     /* To add later: rangefinder, camera, etc.*/
+    PID thetaPID = PID(.32, 0.0, 0.0, 20. / 1000., 1.5, 3); // already tuned
 
     // For managing key presses
     String keyString;
@@ -97,12 +99,19 @@ protected:
     bool CheckIntersection(void) {return lineSensor.CheckIntersection();}
     void HandleIntersection(void);
 
-    void EnterTurn(float angleInDeg);
+    void EnterTurn(int8_t numTurns);
     bool CheckTurnComplete(void);
     void HandleTurnComplete(void);
 
+    void EnterRamping(float speed);
+    void RampingUpdate(void);
+
     /* IMU routines */
     void HandleOrientationUpdate(void);
+
+    /* Controls */
+    bool TurnToAngle(float angle);
+    void HandleTarget(void);
 
     /* For commanding the lifter servo */
     void SetLifter(uint16_t position);
