@@ -4,9 +4,9 @@
 #include <pb_decode.h>
 #include "message.pb.h"  // The generated Nanopb header file
 
-const char* ssid = "your-SSID";
-const char* password = "your-PASSWORD";
-const char* serverURL = "http://example.com/protobuf";  // The server endpoint
+const char* ssid = "ABC-net";
+const char* password = "Lpa44MfxGR6h";
+const char* serverURL = "http://10.0.0.1:8080/protobuf";  // The server endpoint
 
 WiFiClient client;
 
