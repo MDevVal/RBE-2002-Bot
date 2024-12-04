@@ -109,61 +109,34 @@ void Robot::LineFollowingUpdate(void)
     }
 }
 
-/**
- * As coded, HandleIntersection will make the robot drive out 3 intersections, turn around,
- * and stop back at the start. You will need to change the behaviour accordingly.
- */
 void Robot::HandleIntersection(void)
 {
-    Serial.print("X: ");
+    Serial.print("X: \t");
     if(robotState == ROBOT_LINING) 
     {
-        switch(nodeTo)
+        // move an extra 8cm
+        delay(8 / baseSpeed * 1000);
+
+        iGrid += (1 - currDirection) % 2;
+        jGrid += (2 - currDirection) % 2;
+        // Serial.print(" i grid: " + String(iGrid) + "\t, curr dir: \t" + String(currDirection));
+        // Serial.println("\t j grid: " + String(jGrid));
+
+        if (iGrid != iTarget)
         {
-            case NODE_START:
-                if(nodeFrom == NODE_1)
-                    EnterIdleState();
-                break;
-            case NODE_1:
-                // By default, we'll continue on straight
-                if(nodeFrom == NODE_START) 
-                {
-                    nodeTo = NODE_2;
-                }
-                else if(nodeFrom == NODE_2)
-                {
-                    nodeTo = NODE_START;
-                }
-                nodeFrom = NODE_1;
-                break;
-            case NODE_2:
-                // By default, we'll continue on straight
-                if(nodeFrom == NODE_1) 
-                {
-                    nodeTo = NODE_3;
-                }
-                else if(nodeFrom == NODE_3)
-                {
-                    nodeTo = NODE_1;
-                }
-                nodeFrom = NODE_2;
-                break;
-            case NODE_3:
-                // By default, we'll bang a u-ey
-                if(nodeFrom == NODE_2) 
-                {
-                    nodeTo = NODE_2;
-                    nodeFrom = NODE_3;
-                    EnterTurn(180);
-                }
-                break;
-            default:
-                break;
+            targetDirection = (iGrid - iTarget) / abs(-iGrid + iTarget) + 1;
+            EnterTurn(targetDirection - currDirection);
+
         }
-        Serial.print(nodeFrom);
-        Serial.print("->");
-        Serial.print(nodeTo);
-        Serial.print('\n');
+        else if (jGrid != jTarget)
+        {
+            targetDirection = (jGrid - jTarget) / abs(-jGrid + jTarget) + 2;
+            EnterTurn(targetDirection - currDirection);
+        }
+        else
+        {
+            EnterIdleState();
+        }
     }
 }
 
@@ -200,8 +173,8 @@ void Robot::RobotLoop(void)
     /**
      * Check for any intersections
      */
-    if(lineSensor.CheckIntersection()) HandleIntersection();
-    if(CheckTurnComplete()) HandleTurnComplete();
+    if(robotState == ROBOT_LINING && lineSensor.CheckIntersection()) HandleIntersection();
+    if(robotState == ROBOT_TURNING && TurnToAngle(targetHeading)) HandleTurnComplete();
 
     /**
      * Check for an IMU update

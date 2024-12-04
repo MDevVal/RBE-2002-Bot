@@ -25,8 +25,15 @@ protected:
     enum ROBOT_STATE 
     {
         ROBOT_IDLE, 
+        ROBOT_DRIVING,
         ROBOT_LINING,
         ROBOT_TURNING,
+        ROBOT_RAMPING,
+        ROBOT_SEARCHING,
+        ROBOT_GIMMIE_THAT_TAG,
+        ROBOT_TARGETING,
+        ROBOT_WEIGHING,
+        ROBOT_LIFTING
     };
     ROBOT_STATE robotState = ROBOT_IDLE;
 
@@ -51,6 +58,14 @@ protected:
 
     /* targetHeading is used for commanding the robot to turn */
     float targetHeading;
+
+    // direciton controls
+    uint8_t turnPIDCount = 0;
+    int8_t currDirection=0, targetDirection=1;
+    uint8_t iGrid=1, jGrid=0, iTarget=0, jTarget=3;
+
+    // ramp controls
+    bool onRamp = false;
 
     /* baseSpeed is used to drive at a given speed while, say, line following.*/
     float baseSpeed = 0;
