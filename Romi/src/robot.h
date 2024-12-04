@@ -36,6 +36,7 @@ protected:
         ROBOT_WEIGHING,
         ROBOT_LIFTING
     };
+    
     ROBOT_STATE robotState = ROBOT_IDLE;
 
     /* Define the chassis*/
