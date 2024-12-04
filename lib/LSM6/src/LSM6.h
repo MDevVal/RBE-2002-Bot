@@ -3,6 +3,7 @@
 // Datasheet: https://www.pololu.com/file/0J1087/LSM6DS33.pdf
 
 #include <Arduino.h>
+// #include "LSM6Proto.pb.h"
 
 class LSM6
 {
@@ -108,7 +109,7 @@ class LSM6
     vector<int16_t> a; // accelerometer readings
     vector<int16_t> g; // gyro readings
 
-    const float SIGMA = 0.95; // for updating bias
+    const float SIGMA = 0.90; // for updating bias
 
 public:
     LSM6(void);
@@ -138,12 +139,28 @@ public:
     uint8_t getStatus(void) {return readReg(LSM6::STATUS_REG);}
 
     bool checkForNewData(void);
+    // LSM6Proto_LSM6Msg createProtoMessage(void);
 
     vector<float> updateGyroBias(void) 
     {
       /**
        * TODO: add a low-pass filter to update the bias
        */
+      gyroBias.x = SIGMA * gyroBias.x + (1 - SIGMA) * g.x;
+      gyroBias.y = SIGMA * gyroBias.y + (1 - SIGMA) * g.y;
+      gyroBias.z = SIGMA * gyroBias.z + (1 - SIGMA) * g.z;
+      
+      return gyroBias;
+    }
+
+    vector<float> updateAccBias(void) 
+    {
+      /**
+       * TODO: add a low-pass filter to update the bias
+       */
+      accBias.x = SIGMA * accBias.x + (1 - SIGMA) * a.x;
+      accBias.y = SIGMA * accBias.y + (1 - SIGMA) * a.y;
+      // accBias.z = SIGMA * accBias.z + (1 - SIGMA) * a.z;
       
       return gyroBias;
     }
@@ -169,6 +186,7 @@ public:
     // float estimatedPitchAngle = 0;
     // vector<float> eulerAngles;
     vector<float> gyroBias;
+    vector<float> accBias;
 
     /* We make Robot a friend to avoid all the setters and getters. */
     friend class Robot;

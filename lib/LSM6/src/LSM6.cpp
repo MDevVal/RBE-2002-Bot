@@ -29,12 +29,19 @@ LSM6::LSM6(void)
 bool LSM6::checkForNewData(void)
 {
   bool retVal = false;
-  if(getStatus() & 0x01)
+  // Serial.println(getStatus());
+  // digitalWrite(13, HIGH);
+  if(getStatus() & 0x02)
   {
+    // digitalWrite(13, LOW);
+    // digitalWrite(13, HIGH);
     read();
+    // digitalWrite(13, LOW);
+    // Serial.println(g.z);
 
     retVal = true;
   }
+  // digitalWrite(13, LOW);
 
   return retVal;
 }
@@ -229,6 +236,8 @@ void LSM6::enableDefault(void)
     // Set the gyro full scale and data rate
     setFullScaleGyro(GYRO_FS245);
     setGyroDataOutputRate(ODR13);
+    // setFullScaleGyro(GYRO_FS1000);
+    // setGyroDataOutputRate(ODR208);
 
     // Set the accelerometer full scale and data rate
     setFullScaleAcc(ACC_FS2);
@@ -352,4 +361,3 @@ int16_t LSM6::testReg(uint8_t address, regAddr reg)
   {
     return TEST_REG_ERROR;
   }
-}
