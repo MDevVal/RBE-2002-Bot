@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package message;
+
+
+message GridCell {
+    int32 x = 1;
+    int32 y = 2;
+}
+
+message Pose {
+    float x = 1;
+    float y = 2;
+    float heading = 3;
+}
+
+message ServerCommand {
+    // enum Mode {
+    //     TELEOP = 0;
+    //     AUTO = 1;
+    //     SETUP = 2;
+    // }
+
+    // message ModeChange {
+    //     Mode mode = 1;
+    // }
+
+    enum State {
+        IDLE = 0;
+        DRIVING = 1;
+        LINING = 2;
+        TURNING = 3;
+        RAMPING = 4;
+        SEARCHING = 5;
+        GIMMIE_THAT_TAG = 6;
+        TARGETING = 7;
+        WEIGHING = 8;
+        LIFTING = 9;
+    }
+
+    message StateChange {
+        State state = 1;
+        float baseSpeed = 2;
+        GridCell targetGridCell = 3;
+    }
+
+    StateChange stateChange = 1;
+}
+
+message RomiData { 
+
+    Pose pose = 1;
+    Pose velocity = 2;
+    GridCell gridLocation = 3;
+}
