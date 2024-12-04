@@ -4,7 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+anyhow = "1.0.94"
+axum = "0.7.9"
 protobuf = "*"
+reqwest = "0.12.9"
+tokio = { version = "1.42.0", features = ["full"] }
 
 [build-dependencies]
 protobuf-codegen = "*"
