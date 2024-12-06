@@ -36,10 +36,6 @@ typedef struct _message_Pose {
 } message_Pose;
 
 typedef struct _message_RomiData { 
-    bool has_pose;
-    message_Pose pose; 
-    bool has_velocity;
-    message_Pose velocity; 
     bool has_gridLocation;
     message_GridCell gridLocation; 
 } message_RomiData;
@@ -76,12 +72,12 @@ extern "C" {
 #define message_Pose_init_default                {0, 0, 0}
 #define message_ServerCommand_init_default       {false, message_ServerCommand_StateChange_init_default}
 #define message_ServerCommand_StateChange_init_default {_message_ServerCommand_State_MIN, 0, false, message_GridCell_init_default}
-#define message_RomiData_init_default            {false, message_Pose_init_default, false, message_Pose_init_default, false, message_GridCell_init_default}
+#define message_RomiData_init_default            {false, message_GridCell_init_default}
 #define message_GridCell_init_zero               {0, 0}
 #define message_Pose_init_zero                   {0, 0, 0}
 #define message_ServerCommand_init_zero          {false, message_ServerCommand_StateChange_init_zero}
 #define message_ServerCommand_StateChange_init_zero {_message_ServerCommand_State_MIN, 0, false, message_GridCell_init_zero}
-#define message_RomiData_init_zero               {false, message_Pose_init_zero, false, message_Pose_init_zero, false, message_GridCell_init_zero}
+#define message_RomiData_init_zero               {false, message_GridCell_init_zero}
 
 /* Field tags (for use in manual encoding/decoding) */
 #define message_GridCell_x_tag                   1
@@ -89,9 +85,7 @@ extern "C" {
 #define message_Pose_x_tag                       1
 #define message_Pose_y_tag                       2
 #define message_Pose_heading_tag                 3
-#define message_RomiData_pose_tag                1
-#define message_RomiData_velocity_tag            2
-#define message_RomiData_gridLocation_tag        3
+#define message_RomiData_gridLocation_tag        1
 #define message_ServerCommand_StateChange_state_tag 1
 #define message_ServerCommand_StateChange_baseSpeed_tag 2
 #define message_ServerCommand_StateChange_targetGridCell_tag 3
@@ -126,13 +120,9 @@ X(a, STATIC,   OPTIONAL, MESSAGE,  targetGridCell,    3)
 #define message_ServerCommand_StateChange_targetGridCell_MSGTYPE message_GridCell
 
 #define message_RomiData_FIELDLIST(X, a) \
-X(a, STATIC,   OPTIONAL, MESSAGE,  pose,              1) \
-X(a, STATIC,   OPTIONAL, MESSAGE,  velocity,          2) \
-X(a, STATIC,   OPTIONAL, MESSAGE,  gridLocation,      3)
+X(a, STATIC,   OPTIONAL, MESSAGE,  gridLocation,      1)
 #define message_RomiData_CALLBACK NULL
 #define message_RomiData_DEFAULT NULL
-#define message_RomiData_pose_MSGTYPE message_Pose
-#define message_RomiData_velocity_MSGTYPE message_Pose
 #define message_RomiData_gridLocation_MSGTYPE message_GridCell
 
 extern const pb_msgdesc_t message_GridCell_msg;
@@ -151,7 +141,7 @@ extern const pb_msgdesc_t message_RomiData_msg;
 /* Maximum encoded size of messages (where known) */
 #define message_GridCell_size                    22
 #define message_Pose_size                        15
-#define message_RomiData_size                    58
+#define message_RomiData_size                    24
 #define message_ServerCommand_StateChange_size   31
 #define message_ServerCommand_size               33
 

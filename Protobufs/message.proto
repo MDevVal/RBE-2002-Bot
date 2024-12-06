@@ -48,8 +48,5 @@ message ServerCommand {
 }
 
 message RomiData { 
-
-    Pose pose = 1;
-    Pose velocity = 2;
-    GridCell gridLocation = 3;
+    GridCell gridLocation = 1;
 }
