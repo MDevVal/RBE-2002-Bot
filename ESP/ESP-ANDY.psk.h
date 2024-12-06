@@ -1,1 +1,1 @@
-#define PASSWORD "K(E*@WJz%mo\\Wk^,"
+const char* password = "elm69wisest16poisoned";

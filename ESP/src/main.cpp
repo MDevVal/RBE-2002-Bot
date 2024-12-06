@@ -6,9 +6,8 @@
 
 #include "../ESP-ANDY.psk.h"
 
-const char* ssid = "WPI-PSK";
-const char* password = PASSWORD;
-const char* serverURL = "http://10.0.0.1:8080/protobuf";  // The server endpoint
+const char* ssid = "RBE";
+const char* serverURL = "http://130.215.137.221:8080/protobuf";  // The server endpoint
 
 WiFiClient client;
 

@@ -13,6 +13,7 @@ async fn main() -> Result<()> {
     let listener = TcpListener::bind(format!("127.0.0.1:{port}")).await?;
 
     let app = Router::new()
+        .route("/", get(home))
         .route("/protobuf", get(data));
 
     axum::serve(listener, app).await?;
@@ -29,4 +30,8 @@ async fn data() -> Vec<u8> {
     message.stateChange = MessageField::some(state);
 
     message.write_to_bytes().unwrap()
+}
+
+async fn home() -> &'static str {
+    "server"
 }
