@@ -27,8 +27,6 @@ void setup() {
     Serial.println("Connecting to WiFi...");
   }
   Serial.println("Connected to WiFi");
-
-  
 }
 
 void loop() {
@@ -37,13 +35,15 @@ void loop() {
 
   message_RomiData data = message_RomiData_init_default;
   if (msg_size == message_RomiData_size) {
+
+      // Decode the message from the Romi
       if (!romiInterface.readProtobuf(data, message_RomiData_fields)) return; 
 
-      // Send Protobuf over HTTP
-      server.sendHTTP(data);
+      message_ServerCommand serverMessage = message_ServerCommand_init_default;
 
-      message_ServerCommand serverMessage = message_ServerCommand_init_zero;
-      if (server.requestHTTP(serverMessage)) romiInterface.sendProtobuf(serverMessage, message_ServerCommand_fields, message_ServerCommand_size);
+      // Send the Romi data to the server, and send the response back to the Romi
+      if (server.HTTPRequest(data, serverMessage)) 
+        romiInterface.sendProtobuf(serverMessage, message_ServerCommand_fields, message_ServerCommand_size);
   }
 }
 
