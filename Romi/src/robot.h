@@ -3,6 +3,7 @@
 #include <LineSensor.h>
 #include <LSM6.h>
 #include <PID.h>
+#include <Interface.h>
 
 class Robot
 {
@@ -72,6 +73,8 @@ protected:
 
     /* baseSpeed is used to drive at a given speed while, say, line following.*/
     float baseSpeed = 0;
+
+    Interface ESPInterface = Interface(Serial1);
 
     
 public:

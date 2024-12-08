@@ -38,13 +38,9 @@ message ServerCommand {
         LIFTING = 9;
     }
 
-    message StateChange {
-        State state = 1;
-        float baseSpeed = 2;
-        GridCell targetGridCell = 3;
-    }
-
-    StateChange stateChange = 1;
+    optional State state = 1;
+    float baseSpeed = 2;
+    GridCell targetGridCell = 3;
 }
 
 message RomiData { 

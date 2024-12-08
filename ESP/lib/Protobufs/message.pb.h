@@ -40,20 +40,16 @@ typedef struct _message_RomiData {
     message_GridCell gridLocation; 
 } message_RomiData;
 
-typedef struct _message_ServerCommand_StateChange { 
-    message_ServerCommand_State state; 
-    float baseSpeed; 
-    bool has_targetGridCell;
-    message_GridCell targetGridCell; 
-} message_ServerCommand_StateChange;
-
 typedef struct _message_ServerCommand { /* enum Mode {
      TELEOP = 0;
      AUTO = 1;
      SETUP = 2;
  } */
-    bool has_stateChange;
-    message_ServerCommand_StateChange stateChange; 
+    bool has_state;
+    message_ServerCommand_State state; 
+    float baseSpeed; 
+    bool has_targetGridCell;
+    message_GridCell targetGridCell; 
 } message_ServerCommand;
 
 
@@ -70,13 +66,11 @@ extern "C" {
 /* Initializer values for message structs */
 #define message_GridCell_init_default            {0, 0}
 #define message_Pose_init_default                {0, 0, 0}
-#define message_ServerCommand_init_default       {false, message_ServerCommand_StateChange_init_default}
-#define message_ServerCommand_StateChange_init_default {_message_ServerCommand_State_MIN, 0, false, message_GridCell_init_default}
+#define message_ServerCommand_init_default       {false, _message_ServerCommand_State_MIN, 0, false, message_GridCell_init_default}
 #define message_RomiData_init_default            {false, message_GridCell_init_default}
 #define message_GridCell_init_zero               {0, 0}
 #define message_Pose_init_zero                   {0, 0, 0}
-#define message_ServerCommand_init_zero          {false, message_ServerCommand_StateChange_init_zero}
-#define message_ServerCommand_StateChange_init_zero {_message_ServerCommand_State_MIN, 0, false, message_GridCell_init_zero}
+#define message_ServerCommand_init_zero          {false, _message_ServerCommand_State_MIN, 0, false, message_GridCell_init_zero}
 #define message_RomiData_init_zero               {false, message_GridCell_init_zero}
 
 /* Field tags (for use in manual encoding/decoding) */
@@ -86,10 +80,9 @@ extern "C" {
 #define message_Pose_y_tag                       2
 #define message_Pose_heading_tag                 3
 #define message_RomiData_gridLocation_tag        1
-#define message_ServerCommand_StateChange_state_tag 1
-#define message_ServerCommand_StateChange_baseSpeed_tag 2
-#define message_ServerCommand_StateChange_targetGridCell_tag 3
-#define message_ServerCommand_stateChange_tag    1
+#define message_ServerCommand_state_tag          1
+#define message_ServerCommand_baseSpeed_tag      2
+#define message_ServerCommand_targetGridCell_tag 3
 
 /* Struct field encoding specification for nanopb */
 #define message_GridCell_FIELDLIST(X, a) \
@@ -106,18 +99,12 @@ X(a, STATIC,   SINGULAR, FLOAT,    heading,           3)
 #define message_Pose_DEFAULT NULL
 
 #define message_ServerCommand_FIELDLIST(X, a) \
-X(a, STATIC,   OPTIONAL, MESSAGE,  stateChange,       1)
-#define message_ServerCommand_CALLBACK NULL
-#define message_ServerCommand_DEFAULT NULL
-#define message_ServerCommand_stateChange_MSGTYPE message_ServerCommand_StateChange
-
-#define message_ServerCommand_StateChange_FIELDLIST(X, a) \
-X(a, STATIC,   SINGULAR, UENUM,    state,             1) \
+X(a, STATIC,   OPTIONAL, UENUM,    state,             1) \
 X(a, STATIC,   SINGULAR, FLOAT,    baseSpeed,         2) \
 X(a, STATIC,   OPTIONAL, MESSAGE,  targetGridCell,    3)
-#define message_ServerCommand_StateChange_CALLBACK NULL
-#define message_ServerCommand_StateChange_DEFAULT NULL
-#define message_ServerCommand_StateChange_targetGridCell_MSGTYPE message_GridCell
+#define message_ServerCommand_CALLBACK NULL
+#define message_ServerCommand_DEFAULT NULL
+#define message_ServerCommand_targetGridCell_MSGTYPE message_GridCell
 
 #define message_RomiData_FIELDLIST(X, a) \
 X(a, STATIC,   OPTIONAL, MESSAGE,  gridLocation,      1)
@@ -128,22 +115,19 @@ X(a, STATIC,   OPTIONAL, MESSAGE,  gridLocation,      1)
 extern const pb_msgdesc_t message_GridCell_msg;
 extern const pb_msgdesc_t message_Pose_msg;
 extern const pb_msgdesc_t message_ServerCommand_msg;
-extern const pb_msgdesc_t message_ServerCommand_StateChange_msg;
 extern const pb_msgdesc_t message_RomiData_msg;
 
 /* Defines for backwards compatibility with code written before nanopb-0.4.0 */
 #define message_GridCell_fields &message_GridCell_msg
 #define message_Pose_fields &message_Pose_msg
 #define message_ServerCommand_fields &message_ServerCommand_msg
-#define message_ServerCommand_StateChange_fields &message_ServerCommand_StateChange_msg
 #define message_RomiData_fields &message_RomiData_msg
 
 /* Maximum encoded size of messages (where known) */
 #define message_GridCell_size                    22
 #define message_Pose_size                        15
 #define message_RomiData_size                    24
-#define message_ServerCommand_StateChange_size   31
-#define message_ServerCommand_size               33
+#define message_ServerCommand_size               31
 
 #ifdef __cplusplus
 } /* extern "C" */
