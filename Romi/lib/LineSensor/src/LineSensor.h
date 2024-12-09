@@ -2,20 +2,16 @@
 
 #include <Arduino.h>
 
-class LineSensor
-{
+class LineSensor {
 protected:
-    const static uint8_t sensorCount = 6;
-    const byte sensors[sensorCount] = {A0,A11,A2,A3,A4,A6};
-
-    bool prevOnIntersection = false;
+  byte reflectivityPins[6] = {A4, A3, A1, A6, A0, A11};
+  bool prevOnIntersection = false;
 
 public:
-    float AverageReflectance();
-
-    LineSensor(void) {}
-    void Initialize(void);
-    float CalcError(void); // varies between 1 and 6
-    bool CheckIntersection(void);
-    bool LineDetected(void);
+  LineSensor(void) {}
+  void Initialize(void);
+  int16_t CalcError(void);
+  int16_t ReadLeft(void);
+  int16_t ReadRight(void);
+  bool CheckIntersection(bool invert = true);
 };
