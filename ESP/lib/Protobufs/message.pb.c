@@ -15,9 +15,6 @@ PB_BIND(message_Pose, message_Pose, AUTO)
 PB_BIND(message_ServerCommand, message_ServerCommand, AUTO)
 
 
-PB_BIND(message_ServerCommand_StateChange, message_ServerCommand_StateChange, AUTO)
-
-
 PB_BIND(message_RomiData, message_RomiData, AUTO)
 
 

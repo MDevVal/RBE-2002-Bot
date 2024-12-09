@@ -10,7 +10,7 @@ use axum::Router;
 #[tokio::main]
 async fn main() -> Result<()> {
     let port = 8080;
-    let listener = TcpListener::bind(format!("127.0.0.1:{port}")).await?;
+    let listener = TcpListener::bind(format!("0.0.0.0:{port}")).await?;
 
     let app = Router::new()
         .route("/", get(home))

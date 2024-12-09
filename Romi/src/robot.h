@@ -3,6 +3,7 @@
 #include <LSM6.h>
 #include <LineSensor.h>
 #include <PID.h>
+#include <Interface.h>
 
 class Robot {
 protected:
@@ -85,6 +86,9 @@ protected:
   float startAngle = 0;
   float turnAngle = 0;
 
+    Interface ESPInterface = Interface(Serial1);
+
+    
 public:
   Robot(void) {
     keyString.reserve(8);
