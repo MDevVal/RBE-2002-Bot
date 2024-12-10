@@ -12,6 +12,9 @@ PB_BIND(message_GridCell, message_GridCell, AUTO)
 PB_BIND(message_Pose, message_Pose, AUTO)
 
 
+PB_BIND(message_AprilTag, message_AprilTag, AUTO)
+
+
 PB_BIND(message_ServerCommand, message_ServerCommand, AUTO)
 
 

@@ -5,8 +5,8 @@
 #include "message.pb.h"
 #include <Interface.h>
 #include <ServerInterface.h>
-#include <pb_decode.h>
-#include <pb_encode.h>
+#include <openmv.h>
+#include <apriltagdatum.h>
 
 const char *ssid = "RBE";
 const char *password = "elm69wisest16poisoned";
@@ -18,6 +18,8 @@ ServerInterface server = ServerInterface(serverURL);
 
 bool stateChange = false;
 WiFiClient client;
+
+OpenMV camera(Serial2);
 
 uint8_t macHash() {
   uint8_t baseMac[6];
@@ -45,6 +47,22 @@ void setup() {
 }
 
 void loop() {
+  AprilTagDatum tag;
+  if(camera.checkUART(tag)) {
+    message_AprilTag aprilTag = message_AprilTag_init_default;
+    aprilTag.id = tag.id;
+    aprilTag.has_pose = true;
+    aprilTag.pose.x = tag.x;
+    aprilTag.pose.y = tag.y;
+    aprilTag.pose.z = tag.z;
+    aprilTag.pose.roll = tag.roll;
+    aprilTag.pose.pitch = tag.pitch;
+    aprilTag.pose.heading = tag.yaw;
+
+    romiInterface.sendProtobuf(aprilTag, message_AprilTag_fields, message_AprilTag_size);
+  }
+
+
   size_t msg_size;
   if (!romiInterface.readUART(msg_size))
     return;

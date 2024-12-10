@@ -161,6 +161,14 @@ void Robot::RobotLoop(void) {
     size_t msg_size;
     if (!ESPInterface.readUART(msg_size)) return;
 
+    message_AprilTag tag = message_AprilTag_init_default;
+    if (msg_size == message_AprilTag_size) {
+        if (!ESPInterface.readProtobuf(tag, message_AprilTag_fields)) return;
+        Serial.println("Tag ID: " + String(tag.id));
+
+        // HandleAprilTag(tag);
+    }
+
     message_ServerCommand data = message_ServerCommand_init_default;
     if (msg_size == message_ServerCommand_size) {
 

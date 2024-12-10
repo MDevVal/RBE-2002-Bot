@@ -77,7 +77,7 @@ public:
 
         if (!port.readBytes(buffer, buffer_size));//Serial.println("ahhh buffer bad");
 
-        // // Decode and handle ChassisProto_ChassisMsg
+        // // Decode and handle the message
         pb_istream_t stream = pb_istream_from_buffer(buffer, buffer_size);
 
         if (!pb_decode(&stream, fields, &message)) {
