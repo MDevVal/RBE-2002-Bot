@@ -1,20 +1,22 @@
 mod protos;
 mod romi;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use anyhow::Result;
-use protobuf::{EnumOrUnknown, Message, MessageField};
+use protobuf::{EnumOrUnknown, Message};
 use protos::message::server_command::State;
 use protos::message::ServerCommand;
-use romi::{next_state, RomiStore};
+use romi::{execute, next_state, RomiCommander, RomiStore};
 use tokio::net::TcpListener;
 use axum::routing::{get, post};
 use axum::Router;
+use tokio::sync::mpsc::{self, Sender};
 use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 struct ServerState {
     romis: RomiStore,
+    commanders: Sender<RomiCommander>,
 }
 
 #[tokio::main]
@@ -30,9 +32,11 @@ async fn main() -> Result<()> {
     let port = 8080;
     let listener = TcpListener::bind(format!("0.0.0.0:{port}")).await?;
 
+    let (sender, mut romis) = mpsc::channel(8);
 
     let state = ServerState {
         romis: Default::default(),
+        commanders: sender,
     };
 
     let app = Router::new()
@@ -41,7 +45,17 @@ async fn main() -> Result<()> {
         .route("/nextState/:id", post(next_state))
         .with_state(Arc::new(state));
 
-    axum::serve(listener, app).await?;
+    tokio::spawn(async { 
+        axum::serve(listener, app).await.unwrap();
+    });
+
+    let romi = romis.recv().await.unwrap();
+
+    let mut command = ServerCommand::new();
+    command.baseSpeed = 10.;
+    command.state = Some(EnumOrUnknown::new(State::DRIVING));
+    let dat = execute(romi, command).await?;
+    info!("recv: {dat:?}");
 
     Ok(())
 }

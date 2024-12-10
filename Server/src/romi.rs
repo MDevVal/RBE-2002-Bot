@@ -9,11 +9,13 @@ use anyhow::{Context, Result};
 
 use crate::{protos::message::{server_command::{self}, RomiData, ServerCommand}, ServerState};
 
-pub type RomiStore = DashMap<u8, RomiCommander>;
+pub type RomiStore = DashMap<u8, Romi>;
 
 type Callback = oneshot::Sender<RomiData>;
 
-pub struct RomiCommander {
+pub type RomiCommander = mpsc::Sender<(ServerCommand, Callback)>;
+
+pub struct Romi {
     commands: mpsc::Receiver<(ServerCommand, Callback)>,
     callback: Option<Callback>,
 }
@@ -43,7 +45,18 @@ async fn update_state(
     data: Bytes) -> Result<ServerCommand> {
     let romidata = RomiData::parse_from_bytes(&data)?;
 
-    let mut romi = state.romis.get_mut(&id).context("romi not in map")?;
+    let mut romi = match state.romis.get_mut(&id) {
+        Some(x) => x,
+        None => {
+            let (commander, commands) = mpsc::channel(1);
+            state.romis.insert(id, Romi {
+                commands,
+                callback: None,
+            });
+            state.commanders.send(commander).await?;
+            state.romis.get_mut(&id).unwrap()
+        }
+    };
 
     if let Some(callback)  = romi.callback.take() {
         callback.send(romidata).ok().context("callback dead")?;
@@ -59,4 +72,10 @@ async fn update_state(
     romi.callback = Some(callback);
 
     Ok(command)
+}
+
+pub async fn execute(romi: RomiCommander, command: ServerCommand) -> Result<RomiData> {
+    let (tx, rx) = oneshot::channel();
+    romi.send((command, tx)).await?;
+    Ok(rx.await?)
 }
