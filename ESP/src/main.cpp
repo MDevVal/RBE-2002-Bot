@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <WiFi.h>
+#include <esp_wifi.h>
 
 #include <pb_decode.h>
 #include <pb_encode.h>
@@ -9,13 +10,23 @@
 
 const char* ssid = "RBE";
 const char* password = "elm69wisest16poisoned";
-const char* serverURL = "http://130.215.137.221:8080/protobuf";  // The server endpoint
+const char* serverURL = "http://130.215.137.221:8080/nestState/:id:";  // The server endpoint
 
 Interface romiInterface = Interface(Serial1);
 ServerInterface server = ServerInterface(serverURL);
 
 bool stateChange = false;
 WiFiClient client;
+
+uint8_t macHash(){
+  uint8_t baseMac[6];
+  esp_err_t ret = esp_wifi_get_mac(WIFI_IF_STA, baseMac);
+  if (ret == ESP_OK) {
+      return baseMac[3] ^ baseMac[4] ^ baseMac[5];
+  } else {
+      return 0;
+  }
+}
 
 void setup() {
   Serial.begin(115200);
@@ -27,6 +38,8 @@ void setup() {
     Serial.println("Connecting to WiFi...");
   }
   Serial.println("Connected to WiFi");
+
+  Serial.println(macHash()); // TODO: append to url
 }
 
 void loop() {

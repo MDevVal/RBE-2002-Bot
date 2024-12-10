@@ -49,11 +49,11 @@ public:
                 Serial.print("Error decoding protobuf");
             } else {
                 Serial.print("State Change: ");
-                Serial.println(recMsg.stateChange.state);
+                Serial.println(recMsg.state);
                 Serial.print("Has cell data: ");
-                Serial.println(recMsg.stateChange.has_targetGridCell);
+                Serial.println(recMsg.has_targetGridCell);
                 Serial.print("Base speed: ");
-                Serial.println(recMsg.stateChange.baseSpeed);
+                Serial.println(recMsg.baseSpeed);
                 ret = true;
             }
 
