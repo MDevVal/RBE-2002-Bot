@@ -120,21 +120,6 @@ protected:
       sumError += error;
 
       SetEffort(effort);
-
-      if (debug) {
-
-        Serial.print("target:");
-        Serial.print(targetSpeed);
-        Serial.print("\tspeed:");
-        Serial.print(speed);
-        Serial.print("\terror:");
-        Serial.print(error);
-        Serial.print("\teffort:");
-        Serial.print(
-            effort /
-            10.0); // N.B. that we divide by 10 to make the graph cleaner
-        Serial.print('\n');
-      }
     }
   }
 
@@ -154,8 +139,6 @@ protected:
    *  frequency is then: 16 MHz / [1 (prescaler) / (420 + 1)] = 38.005 kHz
    * */
   static void InitializePWMTimerAndInterrupts(void) {
-    Serial.println("InitMotor()");
-
     noInterrupts(); // disable interrupts while we set Timer1 registers
 
     TCCR1A = 0xA2; // 0b10100010; //Fast PWM + enable A and B; change to 0xAA to
@@ -176,8 +159,6 @@ protected:
     AttachInterrupts();
 
     interrupts(); // re-enable interrupts
-
-    Serial.println("/InitMotor()");
   }
 
 public:
@@ -219,8 +200,6 @@ protected:
   }
 
   void InitializeEncoder(void) {
-    Serial.println("InitEnc()");
-
     // Set the pins as pulled-up inputs.
     FastGPIO::Pin<encXOR>::setInputPulledUp();
     FastGPIO::Pin<encB>::setInputPulledUp();
@@ -228,8 +207,6 @@ protected:
     // Initialize the variables so that the speed will start as 0
     lastB = FastGPIO::Pin<encB>::isInputHigh();
     lastA = FastGPIO::Pin<encXOR>::isInputHigh() ^ lastB;
-
-    Serial.println("/InitEnc()");
   }
 
 public:

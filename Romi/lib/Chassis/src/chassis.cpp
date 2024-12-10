@@ -39,7 +39,6 @@ void Chassis::Timer4OverflowISRHandler(void) {
  * by ISR(TIMER4_OVF_vect) below.
  */
 void Chassis::InitializeMotorControlTimer(void) {
-  Serial.println("InitTimer");
   // Disable interupts while we mess with the Timer4 registers
   cli();
 
@@ -86,16 +85,11 @@ void Chassis::InitializeMotorControlTimer(void) {
 
   // Re-enable interrupts
   sei();
-
-  Serial.println("/InitTimer");
 }
 
 bool Chassis::CheckChassisTimer(void) {
   bool retVal = false;
   if (loopFlag) {
-    if (loopFlag > 1)
-      Serial.println("Missed an update in Robot::RobotLoop()!");
-
 #ifdef __LOOP_DEBUG__
     Serial.print(millis());
     Serial.print('\t');

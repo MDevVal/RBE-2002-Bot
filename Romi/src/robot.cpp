@@ -30,9 +30,7 @@ void Robot::InitializeRobot(void) {
 }
 
 void Robot::EnterIdleState(void) {
-  // Serial.println("-> IDLE");
   chassis.Stop();
-  keyString = "";
   robotState = ROBOT_IDLE;
 }
 
@@ -44,7 +42,6 @@ void Robot::EnterIdleState(void) {
 void Robot::HandleOrientationUpdate(void) {
   prevEulerAngles = eulerAngles;
   if (robotState == ROBOT_IDLE) {
-    // TODO: You'll need to add code to LSM6 to update the bias
     imu.updateGyroBias();
     imu.updateAccBias();
   }
@@ -78,11 +75,6 @@ void Robot::HandleOrientationUpdate(void) {
 
     // Keep the heading between 0 and 360
     eulerAngles.z = fmod(eulerAngles.z, 360);
-
-#ifdef __IMU_DEBUG__
-    Serial.println("pitch: \t" + String(eulerAngles.x));
-    Serial.println("roll: \t" + String(eulerAngles.y));
-#endif
   }
 }
 
@@ -144,77 +136,79 @@ void Robot::RobotLoop(void) {
   if (robotState == ROBOT_LINING && lineSensor.CheckIntersection())
     HandleIntersection();
 
-  if (robotState == ROBOT_CENTERING && CheckCenteringComplete()){
+  if (robotState == ROBOT_CENTERING && CheckCenteringComplete()) {
     EnterIdleState();
-    
+
     message_RomiData data = message_RomiData_init_default;
     data.has_gridLocation = true;
     data.gridLocation.x = iGrid;
     data.gridLocation.y = jGrid;
-    ESPInterface.sendProtobuf(data, message_RomiData_fields, message_RomiData_size);
+    ESPInterface.sendProtobuf(data, message_RomiData_fields,
+                              message_RomiData_size);
   }
 
-    /**
-     * Check for an IMU update
-     */
-    if(imu.checkForNewData())
-    {
-        HandleOrientationUpdate();
+  /**
+   * Check for an IMU update
+   */
+  if (imu.checkForNewData()) {
+    HandleOrientationUpdate();
+  }
+
+  /**
+   * Check for any messages from the ESP32
+   */
+  size_t msg_size;
+  if (!ESPInterface.readUART(msg_size))
+    return;
+
+  message_AprilTag tag = message_AprilTag_init_default;
+  if (msg_size == message_AprilTag_size) {
+    if (!ESPInterface.readProtobuf(tag, message_AprilTag_fields))
+      return;
+    Serial.println("Tag ID: " + String(tag.id));
+  }
+
+  message_ServerCommand data = message_ServerCommand_init_default;
+  if (msg_size == message_ServerCommand_size) {
+
+    // Decode the message from the Romi
+    if (!ESPInterface.readProtobuf(data, message_ServerCommand_fields))
+      return;
+
+    if (data.has_targetGridCell) {
+      iTarget = data.targetGridCell.x;
+      jTarget = data.targetGridCell.y;
     }
 
-    /**
-     * Check for any messages from the ESP32
-     */
-    size_t msg_size;
-    if (!ESPInterface.readUART(msg_size)) return;
-
-    message_AprilTag tag = message_AprilTag_init_default;
-    if (msg_size == message_AprilTag_size) {
-        if (!ESPInterface.readProtobuf(tag, message_AprilTag_fields)) return;
-        Serial.println("Tag ID: " + String(tag.id));
-
-        // HandleAprilTag(tag);
-    }
-
-    message_ServerCommand data = message_ServerCommand_init_default;
-    if (msg_size == message_ServerCommand_size) {
-
-        // Decode the message from the Romi
-        if (!ESPInterface.readProtobuf(data, message_ServerCommand_fields)) return;
-
-        if (data.has_targetGridCell) {
-            iTarget = data.targetGridCell.x;
-            jTarget = data.targetGridCell.y;
-        }
-
-        if (data.has_state) switch (data.state) {
-            case message_ServerCommand_State_IDLE:
-                EnterIdleState();
-                break;
-            case message_ServerCommand_State_DRIVING:
-                EnterLineFollowing(data.baseSpeed);
-                break;
-            case message_ServerCommand_State_LINING:
-                EnterLineFollowing(data.baseSpeed);
-                break;
-            case message_ServerCommand_State_TURNING:
-                EnterTurn(data.baseSpeed);
-                break;
-            case message_ServerCommand_State_RAMPING:
-                EnterRamping(data.baseSpeed);
-                break;
-            case message_ServerCommand_State_SEARCHING:
-                break;
-            case message_ServerCommand_State_GIMMIE_THAT_TAG:
-                break;
-            case message_ServerCommand_State_TARGETING:
-                break;
-            case message_ServerCommand_State_WEIGHING:
-                break;
-            case message_ServerCommand_State_LIFTING:
-                break;
-            default:
-                break;
-        }
-    }
+    if (data.has_state)
+      switch (data.state) {
+      case message_ServerCommand_State_IDLE:
+        EnterIdleState();
+        break;
+      case message_ServerCommand_State_DRIVING:
+        EnterLineFollowing(data.baseSpeed);
+        break;
+      case message_ServerCommand_State_LINING:
+        EnterLineFollowing(data.baseSpeed);
+        break;
+      case message_ServerCommand_State_TURNING:
+        EnterTurn(data.baseSpeed);
+        break;
+      case message_ServerCommand_State_RAMPING:
+        EnterRamping(data.baseSpeed);
+        break;
+      case message_ServerCommand_State_SEARCHING:
+        break;
+      case message_ServerCommand_State_GIMMIE_THAT_TAG:
+        break;
+      case message_ServerCommand_State_TARGETING:
+        break;
+      case message_ServerCommand_State_WEIGHING:
+        break;
+      case message_ServerCommand_State_LIFTING:
+        break;
+      default:
+        break;
+      }
+  }
 }

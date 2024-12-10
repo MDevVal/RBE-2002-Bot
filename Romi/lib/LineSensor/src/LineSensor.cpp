@@ -24,28 +24,6 @@ int16_t LineSensor::CalcError(void) {
   int16_t innerError =
       analogRead(reflectivityPins[2]) - analogRead(reflectivityPins[3]);
 
-#ifdef __LINE_DEBUG__
-  Serial.print("1:");
-  Serial.println(analogRead(reflectivityPins[0]));
-  Serial.print("2:");
-  Serial.println(analogRead(reflectivityPins[1]));
-  Serial.print("3:");
-  Serial.println(analogRead(reflectivityPins[2]));
-  Serial.print("4:");
-  Serial.println(analogRead(reflectivityPins[3]));
-  Serial.print("5:");
-  Serial.println(analogRead(reflectivityPins[4]));
-  Serial.print("6:");
-  Serial.println(analogRead(reflectivityPins[5]));
-
-  Serial.print("Outer: ");
-  Serial.println(outerError);
-  Serial.print("Middle: ");
-  Serial.println(middleError);
-  Serial.print("Inner: ");
-  Serial.println(innerError);
-#endif
-
   return ((outerError * 0.70) + (middleError * 0.15) + (innerError * 0.15));
 }
 
