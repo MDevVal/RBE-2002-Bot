@@ -144,8 +144,15 @@ void Robot::RobotLoop(void) {
   if (robotState == ROBOT_LINING && lineSensor.CheckIntersection())
     HandleIntersection();
 
-  if (robotState == ROBOT_CENTERING && CheckCenteringComplete())
-    HandleCenteringComplete();
+  if (robotState == ROBOT_CENTERING && CheckCenteringComplete()){
+    EnterIdleState();
+    
+    message_RomiData data = message_RomiData_init_default;
+    data.has_gridLocation = true;
+    data.gridLocation.x = iGrid;
+    data.gridLocation.y = jGrid;
+    ESPInterface.sendProtobuf(data, message_RomiData_fields, message_RomiData_size);
+  }
 
     /**
      * Check for an IMU update
