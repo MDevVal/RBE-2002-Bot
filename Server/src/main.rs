@@ -3,10 +3,10 @@ mod romi;
 use std::sync::Arc;
 
 use anyhow::Result;
-use protobuf::{EnumOrUnknown, Message};
+use protobuf::{EnumOrUnknown, Message, MessageField, SpecialFields};
 use protos::message::server_command::State;
-use protos::message::ServerCommand;
-use romi::{execute, next_state, RomiCommander, RomiStore};
+use protos::message::{GridCell, ServerCommand};
+use romi::{execute, next_state, Robot, RomiCommander, RomiStore};
 use tokio::net::TcpListener;
 use axum::routing::{get, post};
 use axum::Router;
@@ -51,11 +51,10 @@ async fn main() -> Result<()> {
 
     let romi = romis.recv().await.unwrap();
 
-    let mut command = ServerCommand::new();
-    command.baseSpeed = 10.;
-    command.state = Some(EnumOrUnknown::new(State::DRIVING));
-    let dat = execute(romi, command).await?;
-    info!("recv: {dat:?}");
+    romi.go_cell(0,1).await?;
+    romi.go_cell(1,1).await?;
+    romi.go_cell(1,0).await?;
+    romi.go_cell(0,1).await?;
 
     Ok(())
 }
