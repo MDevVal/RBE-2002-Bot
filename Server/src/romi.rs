@@ -7,7 +7,7 @@ use tokio::{sync::{mpsc, oneshot}, time::timeout};
 use tracing::error;
 use anyhow::{Context, Result};
 
-use crate::{protos::message::{server_command::{self}, RomiData, ServerCommand}, ServerState};
+use crate::{protos::message::{server_command::{self}, GridCell, RomiData, ServerCommand}, ServerState};
 
 pub type RomiStore = DashMap<u8, Romi>;
 
@@ -18,6 +18,7 @@ pub type RomiCommander = mpsc::Sender<(ServerCommand, Callback)>;
 pub struct Romi {
     commands: mpsc::Receiver<(ServerCommand, Callback)>,
     callback: Option<Callback>,
+    position: GridCell,
 }
 
 pub async fn next_state(
@@ -52,11 +53,14 @@ async fn update_state(
             state.romis.insert(id, Romi {
                 commands,
                 callback: None,
+                position: GridCell::new(),
             });
             state.commanders.send(commander).await?;
             state.romis.get_mut(&id).unwrap()
         }
     };
+
+    romi.position = *romidata.gridLocation.clone().0.context("request missing position")?;
 
     if let Some(callback)  = romi.callback.take() {
         callback.send(romidata).ok().context("callback dead")?;
