@@ -9,7 +9,7 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use axum::routing::{any, get, post};
-use axum::Router;
+use axum::{extract, Json, Router};
 use map::{obstacle, remove_obstacle, Map};
 use protobuf::{EnumOrUnknown, Message};
 use protos::message::server_command::{self, State};
@@ -18,7 +18,7 @@ use romi::{next_state, RomiCommander, RomiStore};
 use tokio::net::TcpListener;
 use tokio::sync::mpsc::{self, Sender};
 use tokio::sync::RwLock;
-use tracing::info;
+use tracing::{info, trace};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use tower_http::services::ServeDir;
 use view::ws_handler;
@@ -27,6 +27,7 @@ struct ServerState {
     romis: RomiStore,
     commanders: Sender<RomiCommander>,
     map: RwLock<Map>,
+    goals: Sender<(usize, usize)>,
 }
 
 #[tokio::main]
@@ -43,6 +44,7 @@ async fn main() -> Result<()> {
     let listener = TcpListener::bind(format!("0.0.0.0:{port}")).await?;
 
     let (sender, mut romis) = mpsc::channel(8);
+    let (goal_sender, mut goals) = mpsc::channel(8);
 
     let mut map = Map::new();
     map.insert_obstacle((0,2));
@@ -53,6 +55,7 @@ async fn main() -> Result<()> {
         romis: Default::default(),
         commanders: sender,
         map: RwLock::new(map),
+        goals: goal_sender,
     };
 
     let page = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("public");
@@ -63,6 +66,7 @@ async fn main() -> Result<()> {
         .route("/protobuf", get(data))
         .route("/protobuf", post(data))
         .route("/obstacle", post(obstacle))
+        .route("/goal", post(goal))
         .route("/obstacle", post(remove_obstacle))
         .route("/positions", any(ws_handler))
         .route("/nextState/:id", post(next_state))
@@ -74,13 +78,19 @@ async fn main() -> Result<()> {
     });
 
     let mut romi = romis.recv().await.unwrap();
+    let map = &state.map;
+
+    loop {
+        let goal = goals.recv().await.unwrap();
+        romi.route(map, goal).await.unwrap();
+    }
+
 
     //loop {
     //    let mut command = ServerCommand::new();
     //    command.state = Some(EnumOrUnknown::new(server_command::State::SEARCHING));
     //    romi.execute(command).await.unwrap();
     //}
-    let map = &state.map;
 
     romi.route(map, (0, 4)).await?;
 
@@ -99,4 +109,12 @@ async fn data() -> Vec<u8> {
 
 async fn home() -> &'static str {
     "server"
+}
+
+async fn goal(
+    state: extract::State<Arc<ServerState>>,
+    data: Json<(usize, usize)>,
+) {
+    trace!("sending romi to {data:?}");
+    state.goals.send(data.0).await.unwrap();
 }
