@@ -9,7 +9,7 @@ use dashmap::DashMap;
 use protobuf::{EnumOrUnknown, Message, MessageField, SpecialFields};
 use tokio::{
     sync::{mpsc, oneshot, RwLock},
-    time::timeout,
+    time::{sleep, timeout},
 };
 use tracing::trace;
 use tracing::{error, info};
@@ -40,6 +40,8 @@ impl RomiCommander {
             y,
             special_fields: SpecialFields::new(),
         });
+        command.state = Some(EnumOrUnknown::new(server_command::State::LINING));
+        command.baseSpeed = 10.;
         let dat = self.execute(command).await?;
         info!("recv: {dat:?}");
 
@@ -74,8 +76,8 @@ impl RomiCommander {
                 (get_pos.0 as usize, get_pos.1 as usize),
                 (position.0, position.1),
             )?;
-            if route.len() > 0 {
-                self.go_cell(route[0].0 as i32, route[0].1 as i32).await?;
+            if route.len() > 1 {
+                self.go_cell(route[1].0 as i32, route[1].1 as i32).await?;
             } else {
                 break;
             }
@@ -98,12 +100,20 @@ pub async fn next_state(
 ) -> Vec<u8> {
     trace!("state request from {id}");
 
+    if data.len() == 0 {
+        trace!("empty");
+        return ServerCommand::new().write_to_bytes().unwrap()
+    }
+
     match update_state(state, id, data).await {
-        Result::Ok(command) => command,
+        Result::Ok(command) => {
+            trace!("sending {command:?}");
+            command
+        },
         Err(e) => {
             error!("update state fail: {e}");
             let mut command = ServerCommand::new();
-            command.state = Some(EnumOrUnknown::new(server_command::State::IDLE));
+            //command.state = Some(EnumOrUnknown::new(server_command::State::IDLE));
 
             command
         }

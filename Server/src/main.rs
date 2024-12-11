@@ -50,6 +50,7 @@ async fn main() -> Result<()> {
     let app = Router::new()
         .route("/", get(home))
         .route("/protobuf", get(data))
+        .route("/protobuf", post(data))
         .route("/nextState/:id", post(next_state))
         .with_state(state.clone());
 
@@ -60,6 +61,10 @@ async fn main() -> Result<()> {
     let mut romi = romis.recv().await.unwrap();
 
     let map = &state.map;
+
+    loop {
+        romi.go_cell(1, 1).await?;
+    }
 
     romi.route(map, (1, 1)).await?;
     romi.route(map, (0, 0)).await?;
