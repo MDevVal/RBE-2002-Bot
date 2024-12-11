@@ -202,7 +202,6 @@ void Robot::RobotLoop(void) {
         // Serial.print(", ");
         // Serial.println(jGrid);
     }
-      
 
 
     // add synchronous, pre-motor-update actions here
@@ -255,6 +254,7 @@ void Robot::RobotLoop(void) {
    */
   if (robotState == ROBOT_LINING && lineSensor.CheckIntersection(false)) {
     HandleIntersection();
+  } 
 
   if (robotState == ROBOT_CENTERING && CheckCenteringComplete()) {
     EnterIdleState();
@@ -294,13 +294,13 @@ void Robot::RobotLoop(void) {
 
 //   Serial.println("m");
 
-  message_AprilTag tag = message_AprilTag_init_default;
-  if (msg_size == message_AprilTag_size) {
-    if (!ESPInterface.readProtobuf(tag, message_AprilTag_fields))
-      return;
-    // Serial.println("Tag ID: " + String(tag.id));
-    HandleAprilTag(tag);
-  }
+//   message_AprilTag tag = message_AprilTag_init_default;
+//   if (msg_size == message_AprilTag_size) {
+//     if (!ESPInterface.readProtobuf(tag, message_AprilTag_fields))
+//       return;
+//     // Serial.println("Tag ID: " + String(tag.id));
+//     HandleAprilTag(tag);
+//   }
 
   message_ServerCommand data = message_ServerCommand_init_default;
   if (msg_size == message_ServerCommand_size) {
@@ -330,10 +330,10 @@ void Robot::RobotLoop(void) {
         EnterLineFollowing(data.baseSpeed);
         break;
       case message_ServerCommand_State_LINING:
-        // baseSpeed = data.baseSpeed;
-        // robotState = ROBOT_CENTERING;
-        // HandleCenteringComplete();
-        EnterLineFollowing(0);
+        baseSpeed = data.baseSpeed;
+        robotState = ROBOT_CENTERING;
+        HandleCenteringComplete();
+        // EnterLineFollowing(0);
         break;
       case message_ServerCommand_State_TURNING:
         EnterTurn(data.baseSpeed);
@@ -355,6 +355,6 @@ void Robot::RobotLoop(void) {
         break;
       default:
         break;
-      }
+    }
   }
 }

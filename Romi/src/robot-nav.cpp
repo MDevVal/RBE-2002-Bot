@@ -37,8 +37,8 @@ bool Robot::CheckTurnComplete(void) {
 void Robot::HandleTurnComplete(void) {
   if (robotState == ROBOT_TURNING) {
     currDirection = targetDirection;
-    // Serial.print("dir: ");
-    // Serial.println(currDirection);
+    Serial.print("dir: ");
+    Serial.println(currDirection);
     EnterLineFollowing(baseSpeed);
   }
 }
@@ -46,7 +46,7 @@ void Robot::HandleTurnComplete(void) {
  * Functions related to line following and intersection detection.
  */
 void Robot::EnterLineFollowing(float speed) {
-  // Serial.println(" -> LINING");
+  Serial.println(" -> LINING");
   baseSpeed = speed;
   robotState = ROBOT_LINING;
 }
@@ -67,7 +67,7 @@ void Robot::LineFollowingUpdate(bool invert) {
 }
 
 void Robot::HandleIntersection(void) {
-  // Serial.print("X -- ");
+  Serial.print("X -- ");
   if (robotState == ROBOT_LINING) {
     switch (currDirection) {
     case EAST:
@@ -95,7 +95,7 @@ void Robot::HandleIntersection(void) {
     chassis.SetTwist(10, 0);
     centeringTimer.start(800);
     robotState = ROBOT_CENTERING;
-    // Serial.println("--> reached dest");
+    Serial.println("--> reached dest");
   }
 }
 bool Robot::CheckCenteringComplete(void) {
