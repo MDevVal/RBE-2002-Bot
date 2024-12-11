@@ -11,8 +11,7 @@
 const char *ssid = "RBE";
 const char *password = "elm69wisest16poisoned";
 char *serverURL =
-    // "http://130.215.137.221:8080/nextState/178"; // The server endpoint
-    "http://130.215.137.221:8080/protobuf";
+    "http://130.215.121.37:8080/nextState/178"; // The server endpoint
 
 Interface romiInterface = Interface(Serial1);
 ServerInterface server = ServerInterface(serverURL);

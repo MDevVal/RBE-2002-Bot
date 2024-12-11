@@ -92,12 +92,10 @@ pub struct Romi {
 }
 
 pub async fn next_state(
-    Path(id): Path<char>,
+    Path(id): Path<u8>,
     state: State<Arc<ServerState>>,
     data: Bytes,
 ) -> Vec<u8> {
-    let id = id as u8;
-
     trace!("state request from {id}");
 
     match update_state(state, id, data).await {
@@ -120,6 +118,7 @@ async fn update_state(
     data: Bytes,
 ) -> Result<ServerCommand> {
     let romidata = RomiData::parse_from_bytes(&data)?;
+    trace!("recv: {romidata:?}");
     let grid_cell = *romidata
         .gridLocation
         .clone()

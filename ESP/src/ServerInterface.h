@@ -34,7 +34,7 @@ public:
         // http.addHeader("Content-Type", "application/x-protobuf");
 
         // Send the POST request with the protobuf data
-        int httpCode = http.GET();
+        int httpCode = http.POST(buffer, stream.bytes_written);
 
         if (httpCode == HTTP_CODE_OK) {
 
