@@ -4,9 +4,9 @@
  * Functions related to the IMU (turning; ramp detection)
  */
 void Robot::EnterTurn(int8_t turns) {
-  // Serial.print("--> TURN (");
-  // Serial.print(turns);
-  // Serial.println(')');
+  Serial.print("->TURN(");
+  Serial.print(turns);
+  Serial.println(')');
   robotState = ROBOT_TURNING;
   startAngle = eulerAngles.z;
   turnAngle = 90 * turns;
@@ -59,6 +59,8 @@ void Robot::LineFollowingUpdate(bool invert) {
 
     float turnEffort = lineError * lineKp + derivative * lineKd;
 
+    // Serial.println(lineError)
+
     chassis.SetTwist(baseSpeed, turnEffort);
     prevError = lineError;
   }
@@ -91,9 +93,9 @@ void Robot::HandleIntersection(void) {
     /* Before we turn, we'll center the robot on the intersection. Creep at
     1.5cm/s for 3 secs. */
     chassis.SetTwist(10, 0);
-    centeringTimer.start(600);
+    centeringTimer.start(800);
     robotState = ROBOT_CENTERING;
-    // Serial.println("--> CENTER");
+    // Serial.println("--> reached dest");
   }
 }
 bool Robot::CheckCenteringComplete(void) {
@@ -109,7 +111,7 @@ void Robot::HandleCenteringComplete(void) {
     if (jGrid == jTarget) {
       if (iGrid == iTarget) // reached destination!
       {
-        // Serial.println("Reached Dest!");
+        Serial.println("Reached Dest!");
         EnterIdleState();
         return;
       } else if (iGrid < iTarget) // we'll need to turn EAST

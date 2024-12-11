@@ -146,8 +146,8 @@ public:
       /**
        * TODO: add a low-pass filter to update the bias
        */
-      gyroBias.x = SIGMA * gyroBias.x + (1 - SIGMA) * g.x;
-      gyroBias.y = SIGMA * gyroBias.y + (1 - SIGMA) * g.y;
+      // gyroBias.x = SIGMA * gyroBias.x + (1 - SIGMA) * g.x;
+      // gyroBias.y = SIGMA * gyroBias.y + (1 - SIGMA) * g.y;
       gyroBias.z = SIGMA * gyroBias.z + (1 - SIGMA) * g.z;
       
       return gyroBias;

@@ -92,7 +92,7 @@ protected:
   // direciton controls
   uint8_t turnPIDCount = 0;
   int8_t currDirection = EAST, targetDirection = 0;
-  uint8_t iGrid = 0, jGrid = 0, iTarget = 1, jTarget = 0;
+  uint8_t iGrid = 0, jGrid = 0, iTarget = 0, jTarget = 0;
 
   // ramp controls
   bool onRamp = false;
@@ -104,6 +104,8 @@ protected:
   float turnAngle = 0;
 
   Interface ESPInterface = Interface(Serial1);
+
+  bool waiting = false;
 
 public:
   Robot(void) {

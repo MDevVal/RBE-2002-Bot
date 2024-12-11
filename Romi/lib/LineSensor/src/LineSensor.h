@@ -4,7 +4,7 @@
 
 class LineSensor {
 protected:
-  byte reflectivityPins[6] = {A4, A3, A1, A6, A0, A11};
+  byte reflectivityPins[6] = {A0, A11, A2, A3, A4, A6};
   bool prevOnIntersection = false;
 
 public:

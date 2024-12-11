@@ -54,39 +54,39 @@ void setup() {
 
 void loop() {
 
-  message_ServerCommand serverMessage = message_ServerCommand_init_default;
+  // message_ServerCommand serverMessage = message_ServerCommand_init_default;
 
-  // Send the Romi data to the server, and send the response back to the
-  if (server.HTTPRequest(message_RomiData_init_default, serverMessage)) {
-    Serial.println("recived message from server, sending to romi");
-    romiInterface.sendProtobuf(serverMessage, message_ServerCommand_fields,
-                               message_ServerCommand_size);
-  }
-
-  // AprilTagDatum tag;
-  // if (camera.checkUART(tag)) {
-  //   Serial.println("Tag ID: " + String(tag.id));
-
-  //   message_AprilTag aprilTag = message_AprilTag_init_default;
-  //   // aprilTag.id = tag.id;
-  //   // aprilTag.has_pose = true;
-  //   // aprilTag.pose.x = tag.x;
-  //   // aprilTag.pose.y = tag.y;
-  //   // aprilTag.pose.z = tag.z;
-  //   // aprilTag.pose.roll = tag.roll;
-  //   // aprilTag.pose.pitch = tag.pitch;
-  //   // aprilTag.pose.heading = tag.yaw;
-
-  //   aprilTag.id = tag.id;
-  //   aprilTag.cx = tag.cx;
-  //   aprilTag.cy = tag.cy;
-  //   aprilTag.w = tag.w;
-  //   aprilTag.h = tag.h;
-  //   aprilTag.rot = tag.rot;
-
-  //   romiInterface.sendProtobuf(aprilTag, message_AprilTag_fields,
-  //                              message_AprilTag_size);
+  // // Send the Romi data to the server, and send the response back to the
+  // if (server.HTTPRequest(message_RomiData_init_default, serverMessage)) {
+  //   Serial.println("recived message from server, sending to romi");
+  //   romiInterface.sendProtobuf(serverMessage, message_ServerCommand_fields,
+  //                               message_ServerCommand_size);
   // }
+
+  AprilTagDatum tag;
+  if (camera.checkUART(tag)) {
+    Serial.println("Tag ID: " + String(tag.id));
+
+    message_AprilTag aprilTag = message_AprilTag_init_default;
+    // aprilTag.id = tag.id;
+    // aprilTag.has_pose = true;
+    // aprilTag.pose.x = tag.x;
+    // aprilTag.pose.y = tag.y;
+    // aprilTag.pose.z = tag.z;
+    // aprilTag.pose.roll = tag.roll;
+    // aprilTag.pose.pitch = tag.pitch;
+    // aprilTag.pose.heading = tag.yaw;
+
+    aprilTag.id = tag.id;
+    aprilTag.cx = tag.cx;
+    aprilTag.cy = tag.cy;
+    aprilTag.w = tag.w;
+    aprilTag.h = tag.h;
+    aprilTag.rot = tag.rot;
+
+    romiInterface.sendProtobuf(aprilTag, message_AprilTag_fields,
+                               message_AprilTag_size);
+  }
 
   size_t msg_size;
   if (!romiInterface.readUART(msg_size))
@@ -96,18 +96,17 @@ void loop() {
   if (msg_size == message_RomiData_size) {
 
     // Decode the message from the Romi
-    if (!romiInterface.readProtobuf(data, message_RomiData_fields))
+    if (!romiInterface.readProtobuf(data, message_RomiData_fields)) 
       return;
     Serial.println("got message from romi");
 
     message_ServerCommand serverMessage = message_ServerCommand_init_default;
 
-    // Send the Romi data to the server,
-    //     and send the response back to the
+    // Send the Romi data to the server, and send the response back to the
     if (server.HTTPRequest(data, serverMessage)) {
       Serial.println("recived message from server, sending to romi");
       romiInterface.sendProtobuf(serverMessage, message_ServerCommand_fields,
-                                 message_ServerCommand_size);
+                                  message_ServerCommand_size);
     }
   }
 }

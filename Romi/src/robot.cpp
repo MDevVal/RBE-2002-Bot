@@ -26,6 +26,7 @@ void Robot::InitializeRobot(void) {
 }
 
 void Robot::EnterIdleState(void) {
+    Serial.println(" -> IDLE");
   chassis.Stop();
   robotState = ROBOT_IDLE;
 }
@@ -39,7 +40,7 @@ void Robot::HandleOrientationUpdate(void) {
   prevEulerAngles = eulerAngles;
   if (robotState == ROBOT_IDLE) {
     imu.updateGyroBias();
-    imu.updateAccBias();
+    // imu.updateAccBias();
   }
 
   else // update orientation
@@ -83,7 +84,7 @@ void Robot::EnterRamping(float speed) {
 void Robot::RampingUpdate(void) {
   if (robotState == ROBOT_RAMPING) {
     // Serial.println("doing ramp things: \t" + String(eulerAngles.x));
-    LineFollowingUpdate();
+    LineFollowingUpdate(false);
     if (onRamp) {
       if (abs(eulerAngles.x) < 2) {
         EnterIdleState();
@@ -187,13 +188,26 @@ void Robot::RobotLoop(void) {
    * Check the Chassis timer, which is used for executing motor control
    */
   if (chassis.CheckChassisTimer()) {
-    if (robotState == ROBOT_IDLE) {
+    if (robotState == ROBOT_IDLE && millis() > 5000) {
+        message_RomiData data = message_RomiData_init_default;
+        data.has_gridLocation = true;
+        data.gridLocation.x = iGrid;
+        data.gridLocation.y = jGrid;
+        ESPInterface.sendProtobuf(data, message_RomiData_fields,
+                              message_RomiData_size);
+        // waiting = true;
+
+        // Serial.print("Requesting new target: ");
+        // Serial.print(iGrid);
+        // Serial.print(", ");
+        // Serial.println(jGrid);
     }
+      
+
 
     // add synchronous, pre-motor-update actions here
     if (robotState == ROBOT_LINING)
-      LineFollowingUpdate();
-
+      LineFollowingUpdate(false);
     if (robotState == ROBOT_RAMPING)
       RampingUpdate();
     if (robotState == ROBOT_TURNING && CheckTurnComplete())
@@ -239,33 +253,36 @@ void Robot::RobotLoop(void) {
   /**
    * Check for any intersections
    */
-  if (robotState == ROBOT_LINING && lineSensor.CheckIntersection()) {
+  if (robotState == ROBOT_LINING && lineSensor.CheckIntersection(false)) {
     HandleIntersection();
 
-    message_RomiData data = message_RomiData_init_default;
-    data.has_gridLocation = true;
-    data.gridLocation.x = iGrid;
-    data.gridLocation.y = jGrid;
-    ESPInterface.sendProtobuf(data, message_RomiData_fields,
-                              message_RomiData_size);
+  if (robotState == ROBOT_CENTERING && CheckCenteringComplete()) {
+    EnterIdleState();
+
+    // message_RomiData data = message_RomiData_init_default;
+    // data.has_gridLocation = true;
+    // data.gridLocation.x = iGrid;
+    // data.gridLocation.y = jGrid;
+    // ESPInterface.sendProtobuf(data, message_RomiData_fields,
+    //                           message_RomiData_size);
   }
 
   if (robotState == ROBOT_CENTERING && CheckCenteringComplete()) {
     EnterIdleState();
 
-    message_RomiData data = message_RomiData_init_default;
-    data.has_gridLocation = true;
-    data.gridLocation.x = iGrid;
-    data.gridLocation.y = jGrid;
-    ESPInterface.sendProtobuf(data, message_RomiData_fields,
-                              message_RomiData_size);
+    // message_RomiData data = message_RomiData_init_default;
+    // data.has_gridLocation = true;
+    // data.gridLocation.x = iGrid;
+    // data.gridLocation.y = jGrid;
+    // ESPInterface.sendProtobuf(data, message_RomiData_fields,
+    //                           message_RomiData_size);
   }
 
   /**
    * Check for an IMU update
    */
   if (imu.checkForNewData()) {
-    // HandleOrientationUpdate();
+    HandleOrientationUpdate();
   }
 
   /**
@@ -274,6 +291,8 @@ void Robot::RobotLoop(void) {
   size_t msg_size;
   if (!ESPInterface.readUART(msg_size))
     return;
+
+//   Serial.println("m");
 
   message_AprilTag tag = message_AprilTag_init_default;
   if (msg_size == message_AprilTag_size) {
@@ -290,12 +309,19 @@ void Robot::RobotLoop(void) {
     if (!ESPInterface.readProtobuf(data, message_ServerCommand_fields))
       return;
 
+    if (robotState != ROBOT_IDLE) return;
+
     if (data.has_targetGridCell) {
-      iTarget = data.targetGridCell.x;
-      jTarget = data.targetGridCell.y;
+        iTarget = data.targetGridCell.x;
+        jTarget = data.targetGridCell.y;
+        // Serial.print("Target: ");
+        Serial.print(iTarget);
+        Serial.print(", ");
+        Serial.println(jTarget);
     }
 
     if (data.has_state)
+        Serial.println(data.state);
       switch (data.state) {
       case message_ServerCommand_State_IDLE:
         EnterIdleState();
@@ -304,8 +330,10 @@ void Robot::RobotLoop(void) {
         EnterLineFollowing(data.baseSpeed);
         break;
       case message_ServerCommand_State_LINING:
-        baseSpeed = data.baseSpeed;
-        HandleCenteringComplete();
+        // baseSpeed = data.baseSpeed;
+        // robotState = ROBOT_CENTERING;
+        // HandleCenteringComplete();
+        EnterLineFollowing(0);
         break;
       case message_ServerCommand_State_TURNING:
         EnterTurn(data.baseSpeed);
