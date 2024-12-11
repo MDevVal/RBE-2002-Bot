@@ -6,17 +6,24 @@ socket.addEventListener('open', function (event) {
     socket.send('Hello Server!');
 });
 
+function mapToGrid(x, y) {
+    x = x * 100 + 50;
+    y = y + 50;
+}
+
 socket.addEventListener('message', function (event) {
     console.log('Message from server ', event.data);
     const msg = JSON.parse(event.data);
     console.log(msg);
 
     // Move the image to the specified coordinates
-    const x = msg.x;
-    const y = msg.y;
+    var x = msg.x;
+    var y = msg.y;
 
-    romi.style.left = x * 100 + 'px';
-    romi.style.top = y * 100 + 'px';
+    mapToGrid(x, y);
+
+    romi.style.left = x  + 'px';
+    romi.style.top = y + 'px';
 });
 
 
