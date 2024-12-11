@@ -13,7 +13,7 @@ const char *password = "elm69wisest16poisoned";
 const char *serverURL =
     "http://130.215.137.221:8080/nextState/"; // The server endpoint
 
-Interface romiInterface = Interface(Serial);
+Interface romiInterface = Interface(Serial1);
 ServerInterface server = ServerInterface(serverURL);
 
 bool stateChange = false;
@@ -34,7 +34,7 @@ uint8_t macHash() {
 void setup() {
   Serial.begin(115200);
   Serial1.begin(115200, SERIAL_8N1, 25, 26);
-  Serial2.begin(115200, SERIAL_8N1, 16, 17);
+  Serial2.begin(115200);
 
   // Connect to Wi-Fi
   WiFi.begin(ssid, password);
@@ -51,6 +51,8 @@ void setup() {
 void loop() {
   AprilTagDatum tag;
   if (camera.checkUART(tag)) {
+    Serial.println("Tag ID: " + String(tag.id));
+
     message_AprilTag aprilTag = message_AprilTag_init_default;
     aprilTag.id = tag.id;
     aprilTag.has_pose = true;
@@ -78,9 +80,9 @@ void loop() {
 
     message_ServerCommand serverMessage = message_ServerCommand_init_default;
 
-    // Send the Romi data to the server, and send the response back to the Romi
-    if (server.HTTPRequest(data, serverMessage))
-      romiInterface.sendProtobuf(serverMessage, message_ServerCommand_fields,
-                                 message_ServerCommand_size);
+    // Send the Romi data to the server, and send the response back to the
+    Romi if (server.HTTPRequest(data, serverMessage))
+        romiInterface.sendProtobuf(serverMessage, message_ServerCommand_fields,
+                                   message_ServerCommand_size);
   }
 }
