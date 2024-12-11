@@ -101,6 +101,10 @@ protected:
 
   Interface ESPInterface = Interface(Serial1);
 
+  bool waiting = false;
+
+  EventTimer dataTimer = EventTimer();
+
 public:
   Robot(void) {
     keyString.reserve(8);

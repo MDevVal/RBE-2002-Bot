@@ -11,11 +11,22 @@ void Robot::InitializeRobot(void) {
   // The line sensor elements default to INPUTs, but we'll initialize anyways,
   // for completeness
   lineSensor.Initialize();
+
+  dataTimer.start(5000);
 }
 
 void Robot::EnterIdleState(void) {
   chassis.Stop();
   robotState = ROBOT_IDLE;
+
+  // Serial.println("req data");
+
+  // message_RomiData data = message_RomiData_init_default;
+  // data.has_gridLocation = true;
+  // data.gridLocation.x = iGrid;
+  // data.gridLocation.y = jGrid;
+  // ESPInterface.sendProtobuf(data, message_RomiData_fields,
+  //                           message_RomiData_size);
 }
 
 /**
@@ -136,61 +147,71 @@ void Robot::HandleWeight(int32_t avg) {
  */
 
 void Robot::RobotLoop(void) {
-  if (robotState == ROBOT_IDLE && millis() > 5000) {
+
+  // if (robotState == ROBOT_IDLE && millis() > 5000) {
+  //   if (!waiting) EnterIdleState();
+  //   waiting = true;
+    
+  // }
+
+  if (dataTimer.checkExpired()) {
+    Serial.println("req data");
+
     message_RomiData data = message_RomiData_init_default;
     data.has_gridLocation = true;
     data.gridLocation.x = iGrid;
     data.gridLocation.y = jGrid;
     ESPInterface.sendProtobuf(data, message_RomiData_fields,
                               message_RomiData_size);
+    dataTimer.start(1000);
   }
 
   /**
    * Check the Chassis timer, which is used for executing motor control
    */
   if (chassis.CheckChassisTimer()) {
+    if (robotState == ROBOT_LINING)
+      LineFollowingUpdate(false);
+
+    if (robotState == ROBOT_RAMPING)
+      RampingUpdate();
+
+    if (robotState == ROBOT_TURNING && CheckTurnComplete())
+      HandleTurnComplete();
+
+    servo.update();
+    int32_t reading = 0;
+    if (loadCellHX1.GetReading(reading)) {
+
+      if (robotState == ROBOT_WEIGHING) {
+        HandleWeight(reading);
+      }
+    }
+
+    if (robotState == ROBOT_LIFTING && liftingTimer.checkExpired()) {
+      chassis.Stop();
+      SetLifter(90);
+
+      delay(1000);
+
+      robotState = ROBOT_WEIGHING;
+      loadCellIndex = 0;
+    }
+
     chassis.UpdateMotors();
-  }
-  if (robotState == ROBOT_LINING)
-    LineFollowingUpdate(false);
 
-  if (robotState == ROBOT_RAMPING)
-    RampingUpdate();
+    if (robotState == ROBOT_LINING && lineSensor.CheckIntersection(false)) {
+      HandleIntersection();
+    }
 
-  if (robotState == ROBOT_TURNING && CheckTurnComplete())
-    HandleTurnComplete();
+    if (robotState == ROBOT_CENTERING && CheckCenteringComplete()) {
+      EnterIdleState();
+    }
 
-  servo.update();
-  int32_t reading = 0;
-  if (loadCellHX1.GetReading(reading)) {
-
-    if (robotState == ROBOT_WEIGHING) {
-      HandleWeight(reading);
+    if (robotState == ROBOT_CENTERING && CheckCenteringComplete()) {
+      EnterIdleState();
     }
   }
-
-  if (robotState == ROBOT_LIFTING && liftingTimer.checkExpired()) {
-    chassis.Stop();
-    SetLifter(90);
-
-    delay(1000);
-
-    robotState = ROBOT_WEIGHING;
-    loadCellIndex = 0;
-  }
-
-  if (robotState == ROBOT_LINING && lineSensor.CheckIntersection(false)) {
-    HandleIntersection();
-  }
-
-  if (robotState == ROBOT_CENTERING && CheckCenteringComplete()) {
-    EnterIdleState();
-  }
-
-  if (robotState == ROBOT_CENTERING && CheckCenteringComplete()) {
-    EnterIdleState();
-  }
-
   /**
    * Check for an IMU update
    */
@@ -219,6 +240,8 @@ void Robot::RobotLoop(void) {
     // Decode the message from the Romi
     if (!ESPInterface.readProtobuf(data, message_ServerCommand_fields))
       return;
+
+    Serial.println("rec data");
 
     if (robotState != ROBOT_IDLE)
       return;

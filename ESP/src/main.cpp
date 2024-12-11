@@ -76,13 +76,13 @@ void loop() {
     // Decode the message from the Romi
     if (!romiInterface.readProtobuf(data, message_RomiData_fields))
       return;
-    // Serial.println("got message from romi");
+    Serial.println("got message from romi");
 
     message_ServerCommand serverMessage = message_ServerCommand_init_default;
 
     // Send the Romi data to the server, and send the response back to the
     if (server.HTTPRequest(data, serverMessage)) {
-      // Serial.println("recived message from server, sending to romi");
+      Serial.println("recived message from server, sending to romi");
       romiInterface.sendProtobuf(serverMessage, message_ServerCommand_fields,
                                  message_ServerCommand_size);
     }
