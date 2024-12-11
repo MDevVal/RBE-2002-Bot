@@ -4,7 +4,6 @@
 #include <Interface.h>
 #include <LSM6.h>
 #include <LineSensor.h>
-#include <PID.h>
 #include <message.pb.h>
 #include <servo32u4.h>
 
@@ -62,9 +61,6 @@ protected:
   float lineKp = 1.5;
   float lineKd = 0.0;
 
-  /* To add later: rangefinder, camera, etc.*/
-  PID thetaPID = PID(.32, 0.0, 0.0, 20. / 1000., 1.5, 3); // already tuned
-
   Servo32U4Pin5 servo;
 
   HX711<6, 13> loadCellHX1;
@@ -104,8 +100,6 @@ protected:
   float turnAngle = 0;
 
   Interface ESPInterface = Interface(Serial1);
-
-  bool waiting = false;
 
 public:
   Robot(void) {

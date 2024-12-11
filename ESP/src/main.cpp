@@ -11,7 +11,7 @@
 const char *ssid = "RBE";
 const char *password = "elm69wisest16poisoned";
 char *serverURL =
-    "http://130.215.121.37:8080/nextState/"; // The server endpoint
+    "http://130.215.121.37:8080/nextState/127"; // The server endpoint
 
 Interface romiInterface = Interface(Serial1);
 ServerInterface server = ServerInterface(serverURL);
@@ -46,23 +46,23 @@ void setup() {
   }
   Serial.println("Connected to WiFi");
 
-  char fullURL[128];
-  snprintf(fullURL, sizeof(fullURL), "%s%d", serverURL, macHash());
-  Serial.println(fullURL);
-  server.setServerURL(fullURL);
+  // char fullURL[128];
+  // snprintf(fullURL, sizeof(fullURL), "%s%d", serverURL, macHash());
+  // Serial.println(fullURL);
+  server.setServerURL(serverURL);
 }
 
 void loop() {
-
+  //
   // message_ServerCommand serverMessage = message_ServerCommand_init_default;
-
-  // // Send the Romi data to the server, and send the response back to the
+  //
+  // // // Send the Romi data to the server, and send the response back to the
   // if (server.HTTPRequest(message_RomiData_init_default, serverMessage)) {
   //   Serial.println("recived message from server, sending to romi");
   //   romiInterface.sendProtobuf(serverMessage, message_ServerCommand_fields,
-  //                               message_ServerCommand_size);
+  //                              message_ServerCommand_size);
   // }
-
+  //
   AprilTagDatum tag;
   if (camera.checkUART(tag)) {
     Serial.println("Tag ID: " + String(tag.id));
@@ -96,7 +96,7 @@ void loop() {
   if (msg_size == message_RomiData_size) {
 
     // Decode the message from the Romi
-    if (!romiInterface.readProtobuf(data, message_RomiData_fields)) 
+    if (!romiInterface.readProtobuf(data, message_RomiData_fields))
       return;
     Serial.println("got message from romi");
 
@@ -106,7 +106,7 @@ void loop() {
     if (server.HTTPRequest(data, serverMessage)) {
       Serial.println("recived message from server, sending to romi");
       romiInterface.sendProtobuf(serverMessage, message_ServerCommand_fields,
-                                  message_ServerCommand_size);
+                                 message_ServerCommand_size);
     }
   }
 }

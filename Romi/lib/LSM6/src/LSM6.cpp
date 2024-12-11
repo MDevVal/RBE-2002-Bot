@@ -27,18 +27,11 @@ LSM6::LSM6(void) {
 #define EPSILON 0.00005
 bool LSM6::checkForNewData(void) {
   bool retVal = false;
-  // Serial.println(getStatus());
-  // digitalWrite(13, HIGH);
   if (getStatus() & 0x02) {
-    // digitalWrite(13, LOW);
-    // digitalWrite(13, HIGH);
     read();
-    // digitalWrite(13, LOW);
-    // Serial.println(g.z);
 
     retVal = true;
   }
-  // digitalWrite(13, LOW);
 
   return retVal;
 }
@@ -55,85 +48,85 @@ void LSM6::setTimeout(uint16_t timeout) { io_timeout = timeout; }
 
 uint16_t LSM6::getTimeout() { return io_timeout; }
 
-void LSM6::setFullScaleGyro(GYRO_FS gfs) {
-  uint8_t settings = readReg(LSM6::CTRL2_G);
-  settings &=
-      0xf0; // clear sensitivity bits; can't use 125 setting; bit 0 must be 0
-  switch (gfs) {
-  case GYRO_FS245:
-    writeReg(LSM6::CTRL2_G, settings | 0b00000000);
-    mdpsPerLSB = 8.75;
-    break;
-  case GYRO_FS500:
-    writeReg(LSM6::CTRL2_G, settings | 0b00000100);
-    mdpsPerLSB = 17.5;
-    break;
-  case GYRO_FS1000:
-    writeReg(LSM6::CTRL2_G, settings | 0b00001000);
-    mdpsPerLSB = 35;
-    break;
-  case GYRO_FS2000:
-    writeReg(LSM6::CTRL2_G, settings | 0b00001100);
-    mdpsPerLSB = 70;
-    break;
-  }
-}
+// void LSM6::setFullScaleGyro(GYRO_FS gfs) {
+//   uint8_t settings = readReg(LSM6::CTRL2_G);
+//   settings &=
+//       0xf0; // clear sensitivity bits; can't use 125 setting; bit 0 must be 0
+//   switch (gfs) {
+//   case GYRO_FS245:
+//     writeReg(LSM6::CTRL2_G, settings | 0b00000000);
+//     mdpsPerLSB = 8.75;
+//     break;
+//   case GYRO_FS500:
+//     writeReg(LSM6::CTRL2_G, settings | 0b00000100);
+//     mdpsPerLSB = 17.5;
+//     break;
+//   case GYRO_FS1000:
+//     writeReg(LSM6::CTRL2_G, settings | 0b00001000);
+//     mdpsPerLSB = 35;
+//     break;
+//   case GYRO_FS2000:
+//     writeReg(LSM6::CTRL2_G, settings | 0b00001100);
+//     mdpsPerLSB = 70;
+//     break;
+//   }
+// }
+//
+// void LSM6::setFullScaleAcc(ACC_FS afs) {
+//   uint8_t settings = readReg(LSM6::CTRL1_XL);
+//   settings &= 0xf3; // clear sensitivity bits
+//   switch (afs) {
+//   case ACC_FS2:
+//     writeReg(LSM6::CTRL1_XL, settings | 0b00000000);
+//     mgPerLSB = 0.061;
+//     break;
+//   case ACC_FS4:
+//     writeReg(LSM6::CTRL1_XL, settings | 0b00001000);
+//     mgPerLSB = 0.122;
+//     break;
+//   case ACC_FS8:
+//     writeReg(LSM6::CTRL1_XL, settings | 0b00001100);
+//     mgPerLSB = 0.244;
+//     break;
+//   case ACC_FS16:
+//     writeReg(LSM6::CTRL1_XL, settings | 0b00000100);
+//     mgPerLSB = 0.488;
+//     break;
+//   }
+//
+//   // Serial.print(mgPerLSB, 3);
+// }
 
-void LSM6::setFullScaleAcc(ACC_FS afs) {
-  uint8_t settings = readReg(LSM6::CTRL1_XL);
-  settings &= 0xf3; // clear sensitivity bits
-  switch (afs) {
-  case ACC_FS2:
-    writeReg(LSM6::CTRL1_XL, settings | 0b00000000);
-    mgPerLSB = 0.061;
-    break;
-  case ACC_FS4:
-    writeReg(LSM6::CTRL1_XL, settings | 0b00001000);
-    mgPerLSB = 0.122;
-    break;
-  case ACC_FS8:
-    writeReg(LSM6::CTRL1_XL, settings | 0b00001100);
-    mgPerLSB = 0.244;
-    break;
-  case ACC_FS16:
-    writeReg(LSM6::CTRL1_XL, settings | 0b00000100);
-    mgPerLSB = 0.488;
-    break;
-  }
-
-  // Serial.print(mgPerLSB, 3);
-}
-
-void LSM6::setGyroDataOutputRate(ODR rate) {
-  if (rate < 0 || rate > ODR166k) {
-    return;
-  }
-  uint8_t settings = readReg(LSM6::CTRL2_G);
-  settings &= 0x0f; // clear ODR bits
-  writeReg(LSM6::CTRL2_G, settings | (rate << 4));
-
-  // rate in this case is just a flag for the ODR [1 <= rate <= 8]
-  // corresponding to [13, 26, 52, ..., 1664] Hz
-  gyroODR = 13 * pow(2, rate - 1);
-
-  // Serial.print(gyroODR);
-}
-
-void LSM6::setAccDataOutputRate(ODR rate) {
-  if (rate < 0 || rate > ODR166k) {
-    return;
-  }
-
-  uint8_t settings = readReg(LSM6::CTRL1_XL);
-  settings &= 0x0f; // clear ODR bits
-  writeReg(LSM6::CTRL1_XL, settings | (rate << 4));
-
-  // rate in this case is just a flag for the ODR [1 <= rate <= 8]
-  // corresponding to [13, 26, 52, ..., 1664] Hz
-  accODR = 13 * pow(2, rate - 1);
-
-  // Serial.print(accODR);
-}
+// void LSM6::setGyroDataOutputRate(ODR rate) {
+//   if (rate < 0 || rate > ODR166k) {
+//     return;
+//   }
+//   uint8_t settings = readReg(LSM6::CTRL2_G);
+//   settings &= 0x0f; // clear ODR bits
+//   writeReg(LSM6::CTRL2_G, settings | (rate << 4));
+//
+//   // rate in this case is just a flag for the ODR [1 <= rate <= 8]
+//   // corresponding to [13, 26, 52, ..., 1664] Hz
+//   gyroODR = 13 * pow(2, rate - 1);
+//
+//   // Serial.print(gyroODR);
+// }
+//
+// void LSM6::setAccDataOutputRate(ODR rate) {
+//   if (rate < 0 || rate > ODR166k) {
+//     return;
+//   }
+//
+//   uint8_t settings = readReg(LSM6::CTRL1_XL);
+//   settings &= 0x0f; // clear ODR bits
+//   writeReg(LSM6::CTRL1_XL, settings | (rate << 4));
+//
+//   // rate in this case is just a flag for the ODR [1 <= rate <= 8]
+//   // corresponding to [13, 26, 52, ..., 1664] Hz
+//   accODR = 13 * pow(2, rate - 1);
+//
+//   // Serial.print(accODR);
+// }
 
 bool LSM6::init(deviceType device, sa0State sa0) {
   Wire.begin();
@@ -194,15 +187,15 @@ the registers it writes to.
 */
 void LSM6::enableDefault(void) {
   if (_device == device_DS33) {
-    // Set the gyro full scale and data rate
-    setFullScaleGyro(GYRO_FS245);
-    setGyroDataOutputRate(ODR13);
-    // setFullScaleGyro(GYRO_FS1000);
-    // setGyroDataOutputRate(ODR208);
+    uint8_t settings = readReg(LSM6::CTRL2_G);
+    writeReg(LSM6::CTRL2_G, settings | 0b00000100);
+    gyroODR = 13 * pow(2, 0x5 - 1);
+    mdpsPerLSB = 17.5;
 
-    // Set the accelerometer full scale and data rate
-    setFullScaleAcc(ACC_FS2);
-    setAccDataOutputRate(ODR13);
+    settings = readReg(LSM6::CTRL1_XL);
+    writeReg(LSM6::CTRL1_XL, settings | 0b00001100);
+    accODR = 13 * pow(2, 0x5 - 1);
+    mgPerLSB = 0.244;
 
     // Auto-increment
     writeReg(CTRL3_C, 0x04);
