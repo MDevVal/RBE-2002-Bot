@@ -4,9 +4,9 @@
  * Functions related to the IMU (turning; ramp detection)
  */
 void Robot::EnterTurn(int8_t turns) {
-  Serial.print("--> TURN (");
-  Serial.print(turns);
-  Serial.println(')');
+  // Serial.print("--> TURN (");
+  // Serial.print(turns);
+  // Serial.println(')');
   robotState = ROBOT_TURNING;
   startAngle = eulerAngles.z;
   turnAngle = 90 * turns;
@@ -37,8 +37,8 @@ bool Robot::CheckTurnComplete(void) {
 void Robot::HandleTurnComplete(void) {
   if (robotState == ROBOT_TURNING) {
     currDirection = targetDirection;
-    Serial.print("dir: ");
-    Serial.println(currDirection);
+    // Serial.print("dir: ");
+    // Serial.println(currDirection);
     EnterLineFollowing(baseSpeed);
   }
 }
@@ -46,7 +46,7 @@ void Robot::HandleTurnComplete(void) {
  * Functions related to line following and intersection detection.
  */
 void Robot::EnterLineFollowing(float speed) {
-  Serial.println(" -> LINING");
+  // Serial.println(" -> LINING");
   baseSpeed = speed;
   robotState = ROBOT_LINING;
 }

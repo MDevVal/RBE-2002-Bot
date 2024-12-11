@@ -1,6 +1,4 @@
 #include "robot.h"
-#include <message.pb.h>
-// #include <IRdecoder.h>
 
 void Robot::InitializeRobot(void) {
   chassis.InititalizeChassis();
@@ -103,6 +101,79 @@ void Robot::RampingUpdate(void) {
   }
 }
 
+
+void Robot::HandleAprilTag(message_AprilTag& tag) {
+    // Serial.println(" -> TAG FOUND, ID: " + String(tag.id));
+
+    if (tag.id != 0) {
+        return;
+    }
+    
+     // 3.6 is magic scale constant - OpenMV is a shit library
+    // Pose tagPose = Pose(-3.6 * tag.x, 3.6* tag.y, 3.6 * tag.z, wrapAngle(tag.roll), wrapAngle(tag.pitch), wrapAngle(tag.yaw));
+    // Serial.print("x: \t" + String(tagPose.x) + "\ty: \t" + String(tagPose.y) + "\tz: \t" + String(tagPose.z));
+    // Serial.println("\troll: \t" + String(tagPose.roll * 180./PI) + "\tpitch: \t" + String(tagPose.pitch * 180./PI) + "\tyaw: \t" + String(tagPose.yaw * 180./PI));
+
+
+    if (robotState == ROBOT_SEARCHING) {
+        // Serial.println(" -> FOUND THE HOLY GRAIL");
+        robotState = ROBOT_GIMMIE_THAT_TAG;
+        chassis.Stop();
+    }
+
+    if (robotState == ROBOT_GIMMIE_THAT_TAG) {
+        // negative because camera is on the back
+        // float fwdErr = (95. - (float) tag.h);
+        // float turnErr = (60. - (float) tag.cx);
+
+        float fwdErr = (.01 - tag.pose.x);
+        float turnErr = (.01 - tag.pose.heading);
+
+        float fwdEffort = -.2 * fwdErr;
+        float turnEffort = -.035 * turnErr;
+
+        // Serial.println("fwd, turn");
+        // Serial.println(tag.h);
+        // Serial.println(turnErr);
+
+
+        // Serial.print("turn effort: \t" + String(turnEffort));
+        // Serial.println("\t fwd effort: \t" + String(fwdEffort));
+
+        if (abs(fwdErr) < 5 && abs(turnErr) < 2) {
+            // Serial.println(" -> GOT THE HOLY GRAIL");
+            lastTagId = tag.id;
+            EnterIdleState();
+            EnterLiftingState();
+            return;
+        }
+
+        chassis.SetTwist(fwdEffort, turnEffort);
+    }
+}
+
+void Robot::EnterLiftingState(void) {
+    // Serial.println(" -> LIFTING");
+    robotState = ROBOT_LIFTING;
+    liftingTimer.start(1000);
+    chassis.SetTwist(-10, 0);
+}
+
+
+void Robot::SetLifter(float position) {
+    servo.setTargetPos(map(position, 0, 180, 800, 2200));
+}
+
+void Robot::HandleWeight(int32_t avg) {
+    // Serial.println("BILL");
+    // Serial.println("-------");
+    // Serial.print("Weight: ");
+    // Serial.print((avg - 267097)/909.);
+    // Serial.print("g, \t ID: ");
+    // Serial.println(lastTagId);
+    EnterIdleState();
+}
+
 void Robot::RobotLoop(void) {
   /**
    * The main loop for your robot. Process both synchronous events (motor
@@ -124,6 +195,39 @@ void Robot::RobotLoop(void) {
       LineFollowingUpdate();
     if (robotState == ROBOT_RAMPING)
       RampingUpdate();
+
+    servo.update();
+    int32_t reading = 0;
+    if(loadCellHX1.GetReading(reading)) 
+    {
+
+        if (robotState == ROBOT_WEIGHING) {
+            loadCellReading[loadCellIndex] = reading;
+            loadCellIndex++;
+            if (loadCellIndex == numLoadCellReadings) {
+                // Serial.println("LOAD CELL READING START:");
+                int32_t avg = 0;
+                for (uint8_t i = 0; i < numLoadCellReadings; i++) {
+                    avg += loadCellReading[i];
+                    // Serial.print(loadCellReading[i]);
+                    // Serial.print(", ");
+                }
+                // Serial.println("LOAD CELL READING END");
+                HandleWeight(avg / (float) numLoadCellReadings);
+            };
+        }
+    }
+
+    if (robotState == ROBOT_LIFTING && liftingTimer.checkExpired()) {
+        chassis.Stop();
+        SetLifter(0);
+        
+        delay(1000);
+
+        robotState = ROBOT_WEIGHING;
+        loadCellIndex = 0;
+    }
+
 
     chassis.UpdateMotors();
 
@@ -165,7 +269,8 @@ void Robot::RobotLoop(void) {
   if (msg_size == message_AprilTag_size) {
     if (!ESPInterface.readProtobuf(tag, message_AprilTag_fields))
       return;
-    Serial.println("Tag ID: " + String(tag.id));
+    // Serial.println("Tag ID: " + String(tag.id));
+    HandleAprilTag(tag);
   }
 
   message_ServerCommand data = message_ServerCommand_init_default;
@@ -198,6 +303,8 @@ void Robot::RobotLoop(void) {
         EnterRamping(data.baseSpeed);
         break;
       case message_ServerCommand_State_SEARCHING:
+        robotState = ROBOT_SEARCHING;
+        chassis.SetTwist(0, data.baseSpeed);
         break;
       case message_ServerCommand_State_GIMMIE_THAT_TAG:
         break;

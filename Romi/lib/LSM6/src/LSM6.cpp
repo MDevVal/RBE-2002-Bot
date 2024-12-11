@@ -101,7 +101,7 @@ void LSM6::setFullScaleAcc(ACC_FS afs) {
     break;
   }
 
-  Serial.print(mgPerLSB, 3);
+  // Serial.print(mgPerLSB, 3);
 }
 
 void LSM6::setGyroDataOutputRate(ODR rate) {
@@ -116,7 +116,7 @@ void LSM6::setGyroDataOutputRate(ODR rate) {
   // corresponding to [13, 26, 52, ..., 1664] Hz
   gyroODR = 13 * pow(2, rate - 1);
 
-  Serial.print(gyroODR);
+  // Serial.print(gyroODR);
 }
 
 void LSM6::setAccDataOutputRate(ODR rate) {
@@ -132,7 +132,7 @@ void LSM6::setAccDataOutputRate(ODR rate) {
   // corresponding to [13, 26, 52, ..., 1664] Hz
   accODR = 13 * pow(2, rate - 1);
 
-  Serial.print(accODR);
+  // Serial.print(accODR);
 }
 
 bool LSM6::init(deviceType device, sa0State sa0) {
