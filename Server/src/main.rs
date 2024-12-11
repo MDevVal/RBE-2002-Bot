@@ -44,7 +44,10 @@ async fn main() -> Result<()> {
 
     let (sender, mut romis) = mpsc::channel(8);
 
-    let map = Map::new();
+    let mut map = Map::new();
+    map.insert_obstacle((0,2));
+    map.insert_obstacle((1,3));
+    map.insert_obstacle((2,4));
 
     let state = ServerState {
         romis: Default::default(),

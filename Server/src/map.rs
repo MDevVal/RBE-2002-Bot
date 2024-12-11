@@ -1,8 +1,8 @@
 use anyhow::{Context, Ok};
 use pathfinding::{grid::Grid, prelude::dijkstra};
 
-#[derive(Clone, Copy)]
-enum Cell {
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum Cell {
     Empty,
     Romi,
     Obstacle,
@@ -18,15 +18,27 @@ pub struct Map {
 
 impl Map {
     pub fn new() -> Self {
-        let mut map = [[Cell::Empty; HEIGHT]; WIDTH];
-
+        let map = [[Cell::Empty; HEIGHT]; WIDTH];
         let mut grid = Grid::new(WIDTH, HEIGHT);
         grid.fill();
-        grid.remove_vertex((0,2));
-        map[0][2] = Cell::Garbage;
-        grid.remove_vertex((1,3));
-        grid.remove_vertex((2,4));
         Self { map, grid }
+    }
+
+    pub fn get_all(&self, variety: Cell) -> Vec<(i32, i32)> {
+        let mut matches = Vec::new();
+        for (i, row) in self.map.iter().enumerate() {
+            for (j, cell) in row.iter().enumerate() {
+                if *cell == variety {
+                    matches.push((i as i32, j as i32));
+                }
+            }
+        }
+        matches
+    }
+
+    pub fn insert_obstacle(&mut self, pos: (usize,usize)) {
+        self.grid.remove_vertex(pos);
+        self.map[pos.0][pos.1] = Cell::Obstacle;
     }
 
     pub fn route(

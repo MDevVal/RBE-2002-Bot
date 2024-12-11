@@ -49,24 +49,27 @@ async fn handle_socket(mut socket: WebSocket, who: SocketAddr, state: State<Arc<
 
     let mut send_task = tokio::spawn(async move {
         loop {
-            sender
-                .send(Message::Text(
-                    serde_json::to_string(&Datum::Romi(RomiDatum {
-                        x: 3,
-                        y: 5,
-                        name: 100,
-                    }))
-                    .unwrap(),
-                ))
-                .await
-                .unwrap();
+            let map = state.map.read().await;
 
-            sender
-                .send(Message::Text(
-                    serde_json::to_string(&Datum::Obstacle(PosDatum { x: 5, y: 5 })).unwrap(),
-                ))
-                .await
-                .unwrap();
+            for (x,y) in map.get_all(crate::map::Cell::Obstacle) {
+                sender.send(Message::Text(serde_json::to_string(&Datum::Obstacle(PosDatum {
+                    x,
+                    y,
+                })).unwrap())).await.unwrap();
+            }
+
+            for (x,y) in map.get_all(crate::map::Cell::Garbage) {
+                sender.send(Message::Text(serde_json::to_string(&Datum::Obstacle(PosDatum {
+                    x,
+                    y,
+                })).unwrap())).await.unwrap();
+            }
+
+            sender.send(Message::Text(serde_json::to_string(&Datum::Romi(RomiDatum {
+                x: 3,
+                y: 5,
+                name: 100
+            })).unwrap())).await.unwrap();
 
             for romi in state.romis.iter() {
                 let name = *romi.key();
@@ -76,24 +79,10 @@ async fn handle_socket(mut socket: WebSocket, who: SocketAddr, state: State<Arc<
                     y: pos.y,
                     name,
                 };
-                sender
-                    .send(Message::Text(serde_json::to_string(&romi).unwrap()))
-                    .await
-                    .unwrap();
+                sender.send(Message::Text(serde_json::to_string(&romi).unwrap())).await.unwrap();
             }
 
             tokio::time::sleep(std::time::Duration::from_millis(300)).await;
-        }
-
-        println!("Sending close to {who}...");
-        if let Err(e) = sender
-            .send(Message::Close(Some(CloseFrame {
-                code: axum::extract::ws::close_code::NORMAL,
-                reason: Cow::from("Goodbye"),
-            })))
-            .await
-        {
-            println!("Could not send Close due to {e}, probably it is ok?");
         }
     });
 
