@@ -24,6 +24,15 @@ typedef enum _message_ServerCommand_State {
 } message_ServerCommand_State;
 
 /* Struct definitions */
+typedef struct _message_AprilTag { 
+    int32_t id; 
+    int32_t cx; 
+    int32_t cy; 
+    int32_t w; 
+    int32_t h; 
+    int32_t rot; 
+} message_AprilTag;
+
 typedef struct _message_GridCell { 
     int32_t x; 
     int32_t y; 
@@ -40,12 +49,6 @@ typedef struct _message_Pose {
     float pitch; 
     float heading; 
 } message_Pose;
-
-typedef struct _message_AprilTag { 
-    int32_t id; 
-    bool has_pose;
-    message_Pose pose; 
-} message_AprilTag;
 
 typedef struct _message_RomiData { 
     bool has_gridLocation;
@@ -78,16 +81,22 @@ extern "C" {
 /* Initializer values for message structs */
 #define message_GridCell_init_default            {0, 0}
 #define message_Pose_init_default                {0, 0, false, 0, false, 0, false, 0, 0}
-#define message_AprilTag_init_default            {0, false, message_Pose_init_default}
+#define message_AprilTag_init_default            {0, 0, 0, 0, 0, 0}
 #define message_ServerCommand_init_default       {false, _message_ServerCommand_State_MIN, 0, false, message_GridCell_init_default}
 #define message_RomiData_init_default            {false, message_GridCell_init_default}
 #define message_GridCell_init_zero               {0, 0}
 #define message_Pose_init_zero                   {0, 0, false, 0, false, 0, false, 0, 0}
-#define message_AprilTag_init_zero               {0, false, message_Pose_init_zero}
+#define message_AprilTag_init_zero               {0, 0, 0, 0, 0, 0}
 #define message_ServerCommand_init_zero          {false, _message_ServerCommand_State_MIN, 0, false, message_GridCell_init_zero}
 #define message_RomiData_init_zero               {false, message_GridCell_init_zero}
 
 /* Field tags (for use in manual encoding/decoding) */
+#define message_AprilTag_id_tag                  1
+#define message_AprilTag_cx_tag                  2
+#define message_AprilTag_cy_tag                  3
+#define message_AprilTag_w_tag                   4
+#define message_AprilTag_h_tag                   5
+#define message_AprilTag_rot_tag                 6
 #define message_GridCell_x_tag                   1
 #define message_GridCell_y_tag                   2
 #define message_Pose_x_tag                       1
@@ -96,8 +105,6 @@ extern "C" {
 #define message_Pose_roll_tag                    4
 #define message_Pose_pitch_tag                   5
 #define message_Pose_heading_tag                 6
-#define message_AprilTag_id_tag                  1
-#define message_AprilTag_pose_tag                2
 #define message_RomiData_gridLocation_tag        1
 #define message_ServerCommand_state_tag          1
 #define message_ServerCommand_baseSpeed_tag      2
@@ -122,10 +129,13 @@ X(a, STATIC,   SINGULAR, FLOAT,    heading,           6)
 
 #define message_AprilTag_FIELDLIST(X, a) \
 X(a, STATIC,   SINGULAR, INT32,    id,                1) \
-X(a, STATIC,   OPTIONAL, MESSAGE,  pose,              2)
+X(a, STATIC,   SINGULAR, INT32,    cx,                2) \
+X(a, STATIC,   SINGULAR, INT32,    cy,                3) \
+X(a, STATIC,   SINGULAR, INT32,    w,                 4) \
+X(a, STATIC,   SINGULAR, INT32,    h,                 5) \
+X(a, STATIC,   SINGULAR, INT32,    rot,               6)
 #define message_AprilTag_CALLBACK NULL
 #define message_AprilTag_DEFAULT NULL
-#define message_AprilTag_pose_MSGTYPE message_Pose
 
 #define message_ServerCommand_FIELDLIST(X, a) \
 X(a, STATIC,   OPTIONAL, UENUM,    state,             1) \
@@ -155,7 +165,7 @@ extern const pb_msgdesc_t message_RomiData_msg;
 #define message_RomiData_fields &message_RomiData_msg
 
 /* Maximum encoded size of messages (where known) */
-#define message_AprilTag_size                    43
+#define message_AprilTag_size                    66
 #define message_GridCell_size                    22
 #define message_Pose_size                        30
 #define message_RomiData_size                    24
