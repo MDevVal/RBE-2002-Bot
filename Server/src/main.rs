@@ -5,10 +5,10 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use map::Map;
-use protobuf::{EnumOrUnknown, Message, MessageField, SpecialFields};
+use protobuf::{EnumOrUnknown, Message};
 use protos::message::server_command::State;
-use protos::message::{GridCell, ServerCommand};
-use romi::{execute, next_state, Robot, RomiCommander, RomiStore};
+use protos::message::ServerCommand;
+use romi::{next_state, RomiCommander, RomiStore};
 use tokio::net::TcpListener;
 use axum::routing::{get, post};
 use axum::Router;
@@ -51,14 +51,18 @@ async fn main() -> Result<()> {
         .route("/", get(home))
         .route("/protobuf", get(data))
         .route("/nextState/:id", post(next_state))
-        .with_state(state);
+        .with_state(state.clone());
 
     tokio::spawn(async { 
         axum::serve(listener, app).await.unwrap();
     });
 
-    let romi = romis.recv().await.unwrap();
+    let mut romi = romis.recv().await.unwrap();
 
+    let map = &state.map;
+
+    romi.route(map, (1,1)).await?;
+    romi.route(map, (0,0)).await?;
     romi.go_cell(0,1).await?;
     romi.go_cell(1,1).await?;
     romi.go_cell(1,0).await?;

@@ -3,31 +3,57 @@ use std::{sync::Arc, time::Duration};
 use axum::{body::Bytes, extract::{Path, State}};
 use dashmap::DashMap;
 use protobuf::{EnumOrUnknown, Message, MessageField, SpecialFields};
-use tokio::{sync::{mpsc, oneshot}, time::timeout};
+use tokio::{sync::{mpsc, oneshot, RwLock}, time::timeout};
 use tracing::{error, info};
 use anyhow::{Context, Ok, Result};
 use tracing::trace;
 
-use crate::{protos::message::{server_command::{self}, GridCell, RomiData, ServerCommand}, ServerState};
+use crate::{map::Map, protos::message::{server_command::{self}, GridCell, RomiData, ServerCommand}, ServerState};
 
 pub type RomiStore = DashMap<u8, Romi>;
 
 type Callback = oneshot::Sender<RomiData>;
 
-pub type RomiCommander = mpsc::Sender<(ServerCommand, Callback)>;
-
-pub trait Robot {
-    async fn go_cell(&self, x: i32, y: i32) -> Result<RomiData>;
+pub struct RomiCommander {
+    sender: mpsc::Sender<(ServerCommand, Callback)>,
+    position: GridCell,
 }
 
-impl Robot for RomiCommander {
-    async fn go_cell(&self, x: i32, y: i32) -> Result<RomiData> {
+impl RomiCommander {
+    pub async fn go_cell(&mut self, x: i32, y: i32) -> Result<RomiData> {
         let mut command = ServerCommand::new();
         command.targetGridCell =  MessageField::some(GridCell { x, y, special_fields: SpecialFields::new() });
-        let dat = execute(self, command).await?;
+        let dat = self.execute(command).await?;
         info!("recv: {dat:?}");
 
         Ok(dat)
+    }
+
+    pub async fn execute(&mut self, command: ServerCommand) -> Result<RomiData> {
+        let (tx, rx) = oneshot::channel();
+        self.sender.send((command, tx)).await?;
+        
+        let romi_data = rx.await?;
+        self.position = *romi_data.gridLocation.0.clone().context("request missing position")?;
+        Ok(romi_data)
+    }
+
+    pub fn get_pos(&self) -> (i32, i32) {
+        (self.position.x, self.position.y)
+    }
+
+    pub async fn route(&mut self, map: &RwLock<Map>, position: (usize, usize)) -> anyhow::Result<()> {
+        loop {
+            let get_pos = self.get_pos();
+            let route = map.read().await.route((get_pos.0 as usize, get_pos.1 as usize), (position.0, position.1))?;
+            if route.len() > 0 {
+                self.go_cell(route[0].0 as i32, route[0].1 as i32).await?;
+            } else {
+                break;
+            }
+        }
+
+        Ok(())
     }
 }
 
@@ -64,6 +90,7 @@ async fn update_state(
     id: u8,
     data: Bytes) -> Result<ServerCommand> {
     let romidata = RomiData::parse_from_bytes(&data)?;
+    let grid_cell = *romidata.gridLocation.clone().0.context("request missing position")?;
 
     let mut romi = match state.romis.get_mut(&id) {
         Some(x) => x,
@@ -74,12 +101,15 @@ async fn update_state(
                 callback: None,
                 position: GridCell::new(),
             });
-            state.commanders.send(commander).await?;
+            state.commanders.send(RomiCommander {
+               sender: commander, 
+               position: grid_cell.clone()
+            }).await?;
             state.romis.get_mut(&id).unwrap()
         }
     };
 
-    romi.position = *romidata.gridLocation.clone().0.context("request missing position")?;
+    romi.position = grid_cell;
 
     if let Some(callback)  = romi.callback.take() {
         callback.send(romidata).ok().context("callback dead")?;
@@ -97,8 +127,3 @@ async fn update_state(
     Ok(command)
 }
 
-pub async fn execute(romi: &RomiCommander, command: ServerCommand) -> Result<RomiData> {
-    let (tx, rx) = oneshot::channel();
-    romi.send((command, tx)).await?;
-    Ok(rx.await?)
-}
