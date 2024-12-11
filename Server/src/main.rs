@@ -1,8 +1,10 @@
 mod protos;
 mod romi;
+mod map;
 use std::sync::Arc;
 
 use anyhow::Result;
+use map::Map;
 use protobuf::{EnumOrUnknown, Message, MessageField, SpecialFields};
 use protos::message::server_command::State;
 use protos::message::{GridCell, ServerCommand};
@@ -11,12 +13,14 @@ use tokio::net::TcpListener;
 use axum::routing::{get, post};
 use axum::Router;
 use tokio::sync::mpsc::{self, Sender};
+use tokio::sync::RwLock;
 use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 struct ServerState {
     romis: RomiStore,
     commanders: Sender<RomiCommander>,
+    map: RwLock<Map>,
 }
 
 #[tokio::main]
@@ -34,16 +38,20 @@ async fn main() -> Result<()> {
 
     let (sender, mut romis) = mpsc::channel(8);
 
+    let map = Map::new();
+
     let state = ServerState {
         romis: Default::default(),
         commanders: sender,
+        map: RwLock::new(map),
     };
 
+    let state = Arc::new(state);
     let app = Router::new()
         .route("/", get(home))
         .route("/protobuf", get(data))
         .route("/nextState/:id", post(next_state))
-        .with_state(Arc::new(state));
+        .with_state(state);
 
     tokio::spawn(async { 
         axum::serve(listener, app).await.unwrap();

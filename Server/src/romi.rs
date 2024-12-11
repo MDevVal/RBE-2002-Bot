@@ -17,17 +17,17 @@ type Callback = oneshot::Sender<RomiData>;
 pub type RomiCommander = mpsc::Sender<(ServerCommand, Callback)>;
 
 pub trait Robot {
-    async fn go_cell(&self, x: i32, y: i32) -> Result<()>;
+    async fn go_cell(&self, x: i32, y: i32) -> Result<RomiData>;
 }
 
 impl Robot for RomiCommander {
-    async fn go_cell(&self, x: i32, y: i32) -> Result<()> {
+    async fn go_cell(&self, x: i32, y: i32) -> Result<RomiData> {
         let mut command = ServerCommand::new();
         command.targetGridCell =  MessageField::some(GridCell { x, y, special_fields: SpecialFields::new() });
         let dat = execute(self, command).await?;
         info!("recv: {dat:?}");
 
-        Ok(())
+        Ok(dat)
     }
 }
 
@@ -38,9 +38,10 @@ pub struct Romi {
 }
 
 pub async fn next_state(
-    Path(id): Path<u8>,
+    Path(id): Path<char>,
     state: State<Arc<ServerState>>,
     data: Bytes) -> Vec<u8> {
+    let id = id as u8;
 
     trace!("state request from {id}");
 
