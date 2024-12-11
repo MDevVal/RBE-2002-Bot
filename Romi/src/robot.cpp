@@ -40,7 +40,7 @@ void Robot::HandleOrientationUpdate(void) {
   prevEulerAngles = eulerAngles;
   if (robotState == ROBOT_IDLE) {
     imu.updateGyroBias();
-    // imu.updateAccBias();
+    imu.updateAccBias();
   }
 
   else // update orientation
@@ -101,6 +101,7 @@ void Robot::RampingUpdate(void) {
 }
 
 void Robot::HandleAprilTag(message_AprilTag &tag) {
+  Serial.println("tag");
   // Serial.println(" -> TAG FOUND, ID: " + String(tag.id));
 
   if (tag.id != 0) {
@@ -294,13 +295,13 @@ void Robot::RobotLoop(void) {
 
 //   Serial.println("m");
 
-//   message_AprilTag tag = message_AprilTag_init_default;
-//   if (msg_size == message_AprilTag_size) {
-//     if (!ESPInterface.readProtobuf(tag, message_AprilTag_fields))
-//       return;
-//     // Serial.println("Tag ID: " + String(tag.id));
-//     HandleAprilTag(tag);
-//   }
+  message_AprilTag tag = message_AprilTag_init_default;
+  if (msg_size == message_AprilTag_size) {
+    if (!ESPInterface.readProtobuf(tag, message_AprilTag_fields))
+      return;
+    // Serial.println("Tag ID: " + String(tag.id));
+    HandleAprilTag(tag);
+  }
 
   message_ServerCommand data = message_ServerCommand_init_default;
   if (msg_size == message_ServerCommand_size) {
@@ -315,13 +316,13 @@ void Robot::RobotLoop(void) {
         iTarget = data.targetGridCell.x;
         jTarget = data.targetGridCell.y;
         // Serial.print("Target: ");
-        Serial.print(iTarget);
-        Serial.print(", ");
-        Serial.println(jTarget);
+        // Serial.print(iTarget);
+        // Serial.print(", ");
+        // Serial.println(jTarget);
     }
 
     if (data.has_state)
-        Serial.println(data.state);
+        // Serial.println(data.state);
       switch (data.state) {
       case message_ServerCommand_State_IDLE:
         EnterIdleState();
