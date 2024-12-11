@@ -55,6 +55,10 @@ protected:
   /* Line sensor */
   LineSensor lineSensor;
 
+  float prevError = 0.0;
+  float lineKp = 1.5;
+  float lineKd = 0.0;
+
   /* To add later: rangefinder, camera, etc.*/
   PID thetaPID = PID(.32, 0.0, 0.0, 20. / 1000., 1.5, 3); // already tuned
 
@@ -74,8 +78,8 @@ protected:
 
   // direciton controls
   uint8_t turnPIDCount = 0;
-  int8_t currDirection = 0, targetDirection = 1;
-  uint8_t iGrid = 1, jGrid = 0, iTarget = 0, jTarget = 3;
+  int8_t currDirection = EAST, targetDirection = 0;
+  uint8_t iGrid = 2, jGrid = 2, iTarget = 1, jTarget = 1;
 
   // ramp controls
   bool onRamp = false;
@@ -111,7 +115,7 @@ protected:
    * Line following and navigation routines.
    */
   void EnterLineFollowing(float speed);
-  void LineFollowingUpdate(bool invert = true);
+  void LineFollowingUpdate(bool invert = false);
 
   bool CheckIntersection(void) { return lineSensor.CheckIntersection(); }
   void HandleIntersection(void);

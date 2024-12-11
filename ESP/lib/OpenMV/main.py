@@ -12,11 +12,14 @@ import time
 import math
 import struct
 
-#adding UART capability -- edit UART() for your choice of UART
+# adding UART capability -- edit UART() for your choice of UART
 import pyb
-uart = pyb.UART(1, 115200, timeout_char = 50)
 
-#say hello
+uart = pyb.UART(1, 115200, timeout_char=50)
+
+led = LED("LED_BLUE")
+
+# say hello
 uart.write("Hej, verden!!\n")
 
 sensor.reset()
@@ -59,11 +62,13 @@ c_y = 120 * 0.5  # find_apriltags defaults to this if not set (the image.h * 0.5
 def degrees(radians):
     return (180 * radians) / math.pi
 
+
 def checksum(data):
     checksum = 0
     for i in range(0, len(data), 2):
-        checksum += ((data[i+1] & 0xFF) << 8) | ((data[i+0] & 0xFF) << 0)
+        checksum += ((data[i + 1] & 0xFF) << 8) | ((data[i + 0] & 0xFF) << 0)
     return checksum & 0xFFFF
+
 
 def to_object_block_format(tag):
     temp = struct.pack(
@@ -74,7 +79,7 @@ def to_object_block_format(tag):
         tag.z_translation,
         tag.x_rotation,
         tag.y_rotation,
-        tag.z_rotation
+        tag.z_rotation,
     )
     return struct.pack("<bbh26sb", 0xFF, 0x55, checksum(temp), temp, 0xAA)
 
@@ -82,9 +87,14 @@ def to_object_block_format(tag):
 while True:
     clock.tick()
     img = sensor.snapshot()
-    for tag in img.find_apriltags(
-        fx=f_x, fy=f_y, cx=c_x, cy=c_y
-    ):  # defaults to TAG36H11
+    tag_list = img.find_apriltags(fx=f_x, fy=f_y, cx=c_x, cy=c_y)
+    for tag in tag_list:
+        if len(tag_list) != 0:
+	        led.on()
+        else:
+    		led.off()
+
+        # defaults to TAG36H11
         img.draw_rectangle(tag.rect, color=(255, 0, 0))
         img.draw_cross(tag.cx, tag.cy, color=(0, 255, 0))
         print_args = (
