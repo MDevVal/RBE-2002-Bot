@@ -65,7 +65,7 @@ void Robot::LineFollowingUpdate(bool invert) {
 }
 
 void Robot::HandleIntersection(void) {
-  Serial.print("X -- ");
+  // Serial.print("X -- ");
   if (robotState == ROBOT_LINING) {
     switch (currDirection) {
     case EAST:
@@ -83,17 +83,17 @@ void Robot::HandleIntersection(void) {
     default:
       break;
     }
-    Serial.print("Now at: ");
-    Serial.print(iGrid);
-    Serial.print(',');
-    Serial.print(jGrid);
-    Serial.print('\n');
+    // Serial.print("Now at: ");
+    // Serial.print(iGrid);
+    // Serial.print(',');
+    // Serial.print(jGrid);
+    // Serial.print('\n');
     /* Before we turn, we'll center the robot on the intersection. Creep at
     1.5cm/s for 3 secs. */
     chassis.SetTwist(10, 0);
     centeringTimer.start(600);
     robotState = ROBOT_CENTERING;
-    Serial.println("--> CENTER");
+    // Serial.println("--> CENTER");
   }
 }
 bool Robot::CheckCenteringComplete(void) {
@@ -109,7 +109,7 @@ void Robot::HandleCenteringComplete(void) {
     if (jGrid == jTarget) {
       if (iGrid == iTarget) // reached destination!
       {
-        Serial.println("Reached Dest!");
+        // Serial.println("Reached Dest!");
         EnterIdleState();
         return;
       } else if (iGrid < iTarget) // we'll need to turn EAST

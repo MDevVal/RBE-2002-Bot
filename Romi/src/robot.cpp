@@ -204,19 +204,20 @@ void Robot::RobotLoop(void) {
     {
 
         if (robotState == ROBOT_WEIGHING) {
-            loadCellReading[loadCellIndex] = reading;
-            loadCellIndex++;
-            if (loadCellIndex == numLoadCellReadings) {
-                // Serial.println("LOAD CELL READING START:");
-                int32_t avg = 0;
-                for (uint8_t i = 0; i < numLoadCellReadings; i++) {
-                    avg += loadCellReading[i];
-                    // Serial.print(loadCellReading[i]);
-                    // Serial.print(", ");
-                }
+            HandleWeight(reading);
+            // loadCellReading[loadCellIndex] = reading;
+            // loadCellIndex++;
+            // if (loadCellIndex == numLoadCellReadings) {
+            //     // Serial.println("LOAD CELL READING START:");
+            //     int32_t avg = 0;
+            //     for (uint8_t i = 0; i < numLoadCellReadings; i++) {
+            //         avg += loadCellReading[i];
+            //         // Serial.print(loadCellReading[i]);
+            //         // Serial.print(", ");
+            //     }
                 // Serial.println("LOAD CELL READING END");
-                HandleWeight(avg / (float) numLoadCellReadings);
-            };
+            //     HandleWeight(avg / (float) numLoadCellReadings);
+            // };
         }
     }
 
