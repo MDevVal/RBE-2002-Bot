@@ -52,18 +52,18 @@ void Robot::EnterLineFollowing(float speed) {
 }
 
 void Robot::LineFollowingUpdate(bool invert) {
-  if (robotState == ROBOT_LINING) {
-    float lineError =
-        (invert ? -lineSensor.CalcError() : lineSensor.CalcError()) / 1023.0;
-    float derivative = (lineError - prevError);
+  // if (robotState == ROBOT_LINING) {
+  float lineError =
+      (invert ? -lineSensor.CalcError() : lineSensor.CalcError()) / 1023.0;
+  float derivative = (lineError - prevError);
 
-    float turnEffort = lineError * lineKp + derivative * lineKd;
+  float turnEffort = lineError * lineKp + derivative * lineKd;
 
-    // Serial.println(lineError)
+  // Serial.println(lineError)
 
-    chassis.SetTwist(baseSpeed, turnEffort);
-    prevError = lineError;
-  }
+  chassis.SetTwist(baseSpeed, turnEffort);
+  prevError = lineError;
+  // }
 }
 
 void Robot::HandleIntersection(void) {

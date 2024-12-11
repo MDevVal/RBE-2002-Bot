@@ -105,7 +105,7 @@ protected:
 
   Interface ESPInterface = Interface(Serial1);
 
-  bool waiting = false;
+  bool waiting = true;
 
 public:
   Robot(void) {
@@ -140,7 +140,7 @@ protected:
   void HandleTurnComplete(void);
 
   void EnterRamping(float speed);
-  void RampingUpdate(void);
+  void RampingUpdate();
 
   /* IMU routines */
   void HandleOrientationUpdate(void);

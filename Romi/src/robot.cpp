@@ -76,15 +76,17 @@ void Robot::HandleOrientationUpdate(void) {
 }
 
 void Robot::EnterRamping(float speed) {
+  // Serial.println("->r");
   baseSpeed = speed;
   onRamp = false;
   robotState = ROBOT_RAMPING;
 }
 
-void Robot::RampingUpdate(void) {
+void Robot::RampingUpdate() {
   if (robotState == ROBOT_RAMPING) {
+    // Serial.println('R');
     // Serial.println("doing ramp things: \t" + String(eulerAngles.x));
-    LineFollowingUpdate(false);
+    LineFollowingUpdate(true);
     if (onRamp) {
       if (abs(eulerAngles.x) < 2) {
         EnterIdleState();
@@ -96,12 +98,12 @@ void Robot::RampingUpdate(void) {
       }
     }
 
-    digitalWrite(13, onRamp);
+    // digitalWrite(13, onRamp);
   }
 }
 
 void Robot::HandleAprilTag(message_AprilTag &tag) {
-  Serial.println("tag");
+  // Serial.println("tag");
   // Serial.println(" -> TAG FOUND, ID: " + String(tag.id));
 
   if (tag.id != 0) {
@@ -144,7 +146,7 @@ void Robot::HandleAprilTag(message_AprilTag &tag) {
     if (abs(fwdErr) < 5 && abs(turnErr) < 2) {
       // Serial.println(" -> GOT THE HOLY GRAIL");
       lastTagId = tag.id;
-      EnterIdleState();
+      // EnterIdleState();
       EnterLiftingState();
       return;
     }
@@ -156,8 +158,7 @@ void Robot::HandleAprilTag(message_AprilTag &tag) {
 void Robot::EnterLiftingState(void) {
   // Serial.println(" -> LIFTING");
   robotState = ROBOT_LIFTING;
-  SetLifter(90);
-  liftingTimer.start(1000);
+  liftingTimer.start(750);
   chassis.SetTwist(-10, 0);
 }
 
@@ -169,10 +170,13 @@ void Robot::HandleWeight(int32_t avg) {
   // Serial.println("BILL");
   // Serial.println("-------");
   // Serial.print("Weight: ");
-  // Serial.print((avg - 267097)/909.);
+  Serial.print((avg - 267097)/909.);
   // Serial.print("g, \t ID: ");
   // Serial.println(lastTagId);
   EnterIdleState();
+   
+   // UNCOMMENT THIS WHEN DOING ATAG FR
+  // LineFollowingUpdate(false); 
 }
 
 void Robot::RobotLoop(void) {
@@ -192,13 +196,16 @@ void Robot::RobotLoop(void) {
    */
   if (chassis.CheckChassisTimer()) {
     if (robotState == ROBOT_IDLE && millis() > 5000) {
+        waiting = false;
+
         message_RomiData data = message_RomiData_init_default;
         data.has_gridLocation = true;
         data.gridLocation.x = iGrid;
         data.gridLocation.y = jGrid;
         ESPInterface.sendProtobuf(data, message_RomiData_fields,
                               message_RomiData_size);
-        // waiting = true;
+        
+        // Serial.println(robotState
 
         // Serial.print("Requesting new target: ");
         // Serial.print(iGrid);
@@ -239,7 +246,7 @@ void Robot::RobotLoop(void) {
 
     if (robotState == ROBOT_LIFTING && liftingTimer.checkExpired()) {
       chassis.Stop();
-      SetLifter(180);
+      SetLifter(90);
 
       delay(1000);
 
@@ -292,28 +299,37 @@ void Robot::RobotLoop(void) {
    * Check for any messages from the ESP32
    */
   size_t msg_size;
-  if (!ESPInterface.readUART(msg_size))
-    return;
+  // if (!ESPInterface.readUART(msg_size))
+  //   return;
 
 //   Serial.println("m");
 
-  message_AprilTag tag = message_AprilTag_init_default;
-  if (msg_size == message_AprilTag_size) {
-    if (!ESPInterface.readProtobuf(tag, message_AprilTag_fields))
-      return;
+  // message_AprilTag tag = message_AprilTag_init_default;
+  // if (msg_size == message_AprilTag_size) {
+  //   if (!ESPInterface.readProtobuf(tag, message_AprilTag_fields))
+  //     return;
 
-    //Serial.println("Tag ID: " + String(tag.id));
-    HandleAprilTag(tag);
-  }
+  //   //Serial.println("Tag ID: " + String(tag.id));
+  //   HandleAprilTag(tag);
+  // }
 
   message_ServerCommand data = message_ServerCommand_init_default;
-  if (msg_size == message_ServerCommand_size) {
+  // if (msg_size == message_ServerCommand_size) {
+  if (!waiting) {
 
     // Decode the message from the Romi
-    if (!ESPInterface.readProtobuf(data, message_ServerCommand_fields))
-      return;
+    // if (!ESPInterface.readProtobuf(data, message_ServerCommand_fields))
+    //   return;
 
     if (robotState != ROBOT_IDLE) return;
+
+    // Server emulation:
+    // robotState = ROBOT_SEARCHING;
+    // chassis.SetTwist(0, data.baseSpeed);
+
+    EnterRamping(5);
+    // Serial.println(robotState);
+    return;
 
     if (data.has_targetGridCell) {
         iTarget = data.targetGridCell.x;
@@ -325,7 +341,7 @@ void Robot::RobotLoop(void) {
     }
 
     if (data.has_state)
-        // Serial.println(data.state);
+        Serial.println(data.state);
       switch (data.state) {
       case message_ServerCommand_State_IDLE:
         EnterIdleState();
