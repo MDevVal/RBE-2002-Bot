@@ -4,6 +4,7 @@
  * Functions related to the IMU (turning; ramp detection)
  */
 void Robot::EnterTurn(int8_t turns) {
+  Serial.print("--> TURN (");
   Serial.print(turns);
   Serial.println(')');
   robotState = ROBOT_TURNING;
@@ -36,6 +37,7 @@ bool Robot::CheckTurnComplete(void) {
 void Robot::HandleTurnComplete(void) {
   if (robotState == ROBOT_TURNING) {
     currDirection = targetDirection;
+    Serial.print("dir: ");
     Serial.println(currDirection);
     EnterLineFollowing(baseSpeed);
   }
@@ -44,21 +46,26 @@ void Robot::HandleTurnComplete(void) {
  * Functions related to line following and intersection detection.
  */
 void Robot::EnterLineFollowing(float speed) {
+  Serial.println(" -> LINING");
   baseSpeed = speed;
   robotState = ROBOT_LINING;
 }
+
 void Robot::LineFollowingUpdate(bool invert) {
-  if (robotState == ROBOT_LINING) //|| robotState == ROBOT_CENTERING)
-  {
-    // Read line sensors
+  if (robotState == ROBOT_LINING) {
     float lineError =
         (invert ? -lineSensor.CalcError() : lineSensor.CalcError()) / 1023.0;
+    float derivative = (lineError - prevError);
 
-    float turnEffort = lineError;
+    float turnEffort = lineError * lineKp + derivative * lineKd;
+
     chassis.SetTwist(baseSpeed, turnEffort);
+    prevError = lineError;
   }
 }
+
 void Robot::HandleIntersection(void) {
+  Serial.print("X -- ");
   if (robotState == ROBOT_LINING) {
     switch (currDirection) {
     case EAST:
@@ -76,15 +83,17 @@ void Robot::HandleIntersection(void) {
     default:
       break;
     }
-    // Serial.print(iGrid);
-    // Serial.print(',');
-    // Serial.print(jGrid);
-    // Serial.print('\n');
+    Serial.print("Now at: ");
+    Serial.print(iGrid);
+    Serial.print(',');
+    Serial.print(jGrid);
+    Serial.print('\n');
     /* Before we turn, we'll center the robot on the intersection. Creep at
     1.5cm/s for 3 secs. */
-    chassis.SetTwist(1.5, 0);
-    centeringTimer.start(3000);
+    chassis.SetTwist(10, 0);
+    centeringTimer.start(600);
     robotState = ROBOT_CENTERING;
+    Serial.println("--> CENTER");
   }
 }
 bool Robot::CheckCenteringComplete(void) {
@@ -100,6 +109,7 @@ void Robot::HandleCenteringComplete(void) {
     if (jGrid == jTarget) {
       if (iGrid == iTarget) // reached destination!
       {
+        Serial.println("Reached Dest!");
         EnterIdleState();
         return;
       } else if (iGrid < iTarget) // we'll need to turn EAST
