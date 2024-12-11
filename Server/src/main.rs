@@ -10,7 +10,7 @@ use std::sync::Arc;
 use anyhow::Result;
 use axum::routing::{any, get, post};
 use axum::Router;
-use map::Map;
+use map::{obstacle, remove_obstacle, Map};
 use protobuf::{EnumOrUnknown, Message};
 use protos::message::server_command::{self, State};
 use protos::message::ServerCommand;
@@ -62,6 +62,8 @@ async fn main() -> Result<()> {
         //.route("/", get(home))
         .route("/protobuf", get(data))
         .route("/protobuf", post(data))
+        .route("/obstacle", post(obstacle))
+        .route("/obstacle", post(remove_obstacle))
         .route("/positions", any(ws_handler))
         .route("/nextState/:id", post(next_state))
         .with_state(state.clone())

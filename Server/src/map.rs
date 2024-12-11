@@ -1,5 +1,11 @@
+use std::sync::Arc;
+
 use anyhow::{Context, Ok};
+use axum::{extract::State, Json};
 use pathfinding::{grid::Grid, prelude::dijkstra};
+use tracing::trace;
+
+use crate::ServerState;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Cell {
@@ -41,6 +47,11 @@ impl Map {
         self.map[pos.0][pos.1] = Cell::Obstacle;
     }
 
+    pub fn remove_obstacle(&mut self, pos: (usize,usize)) {
+        self.grid.add_vertex(pos);
+        self.map[pos.0][pos.1] = Cell::Empty;
+    }
+
     pub fn route(
         &self,
         from: (usize, usize),
@@ -54,4 +65,20 @@ impl Map {
 
         Ok(route.0)
     }
+}
+
+pub async fn obstacle(
+    state: State<Arc<ServerState>>,
+    data: Json<(usize, usize)>,
+) {
+    trace!("adding obstacle at {data:?}");
+    state.map.write().await.insert_obstacle(data.0);
+}
+
+pub async fn remove_obstacle(
+    state: State<Arc<ServerState>>,
+    data: Json<(usize, usize)>,
+) {
+    trace!("adding obstacle at {data:?}");
+    state.map.write().await.remove_obstacle(data.0);
 }
