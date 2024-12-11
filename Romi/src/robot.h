@@ -4,6 +4,9 @@
 #include <LSM6.h>
 #include <LineSensor.h>
 #include <PID.h>
+#include <servo32u4.h>
+#include <HX711.h>
+#include <message.pb.h>
 
 class Robot {
 protected:
@@ -61,6 +64,16 @@ protected:
 
   /* To add later: rangefinder, camera, etc.*/
   PID thetaPID = PID(.32, 0.0, 0.0, 20. / 1000., 1.5, 3); // already tuned
+
+  Servo32U4Pin5 servo;
+
+  HX711<4, 12> loadCellHX1;
+  const static uint8_t numLoadCellReadings = 50;
+  int32_t loadCellReading[numLoadCellReadings];
+  uint8_t loadCellIndex = 0;
+  EventTimer liftingTimer;
+
+  uint8_t lastTagId = 255;
 
   // For managing key presses
   String keyString;
@@ -131,10 +144,13 @@ protected:
   void HandleOrientationUpdate(void);
 
   /* Controls */
-  void HandleTarget(void);
+  void HandleAprilTag(message_AprilTag& tag);
+  
 
   /* For commanding the lifter servo */
-  void SetLifter(uint16_t position);
+  void EnterLiftingState(void);
+  void SetLifter(float position);
+  void HandleWeight(int32_t avg);
 
   bool CheckCenteringComplete(void);
 

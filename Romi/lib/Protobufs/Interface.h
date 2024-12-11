@@ -20,7 +20,7 @@ public:
 
         // Serialize the message to the buffer
         if (!pb_encode(&stream, fields, &msg)) {
-            Serial.println("Serialization failed!");
+            // Serial.println("Serialization failed!");
             return; 
         }
 

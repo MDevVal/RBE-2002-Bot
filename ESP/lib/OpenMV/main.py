@@ -11,6 +11,7 @@ import sensor
 import time
 import math
 import struct
+from machine import LED
 
 # adding UART capability -- edit UART() for your choice of UART
 import pyb
@@ -88,11 +89,12 @@ while True:
     clock.tick()
     img = sensor.snapshot()
     tag_list = img.find_apriltags(fx=f_x, fy=f_y, cx=c_x, cy=c_y)
+    if len(tag_list) != 0:
+        led.on()
+    else:
+        led.off()
+
     for tag in tag_list:
-        if len(tag_list) != 0:
-	        led.on()
-        else:
-    		led.off()
 
         # defaults to TAG36H11
         img.draw_rectangle(tag.rect, color=(255, 0, 0))
