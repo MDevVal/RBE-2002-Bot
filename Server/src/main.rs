@@ -1,10 +1,14 @@
 mod map;
 mod protos;
 mod romi;
+mod view;
+use std::net::SocketAddr;
+use std::path::PathBuf;
+use std::str::FromStr;
 use std::sync::Arc;
 
 use anyhow::Result;
-use axum::routing::{get, post};
+use axum::routing::{any, get, post};
 use axum::Router;
 use map::Map;
 use protobuf::{EnumOrUnknown, Message};
@@ -16,6 +20,8 @@ use tokio::sync::mpsc::{self, Sender};
 use tokio::sync::RwLock;
 use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use tower_http::services::ServeDir;
+use view::ws_handler;
 
 struct ServerState {
     romis: RomiStore,
@@ -33,7 +39,7 @@ async fn main() -> Result<()> {
     let reg = tracing_subscriber::registry().with(stdout);
     reg.try_init()?;
 
-    let port = 8080;
+    let port = 8081;
     let listener = TcpListener::bind(format!("0.0.0.0:{port}")).await?;
 
     let (sender, mut romis) = mpsc::channel(8);
@@ -46,13 +52,17 @@ async fn main() -> Result<()> {
         map: RwLock::new(map),
     };
 
+    let page = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("public");
     let state = Arc::new(state);
     let app = Router::new()
-        .route("/", get(home))
+        .fallback_service(ServeDir::new(page).append_index_html_on_directories(true))
+        //.route("/", get(home))
         .route("/protobuf", get(data))
         .route("/protobuf", post(data))
+        .route("/positions", any(ws_handler))
         .route("/nextState/:id", post(next_state))
-        .with_state(state.clone());
+        .with_state(state.clone())
+        .into_make_service_with_connect_info::<SocketAddr>();
 
     tokio::spawn(async {
         axum::serve(listener, app).await.unwrap();
@@ -60,14 +70,14 @@ async fn main() -> Result<()> {
 
     let mut romi = romis.recv().await.unwrap();
 
-    loop {
-        let mut command = ServerCommand::new();
-        command.state = Some(EnumOrUnknown::new(server_command::State::SEARCHING));
-        romi.execute(command).await.unwrap();
-    }
+    //loop {
+    //    let mut command = ServerCommand::new();
+    //    command.state = Some(EnumOrUnknown::new(server_command::State::SEARCHING));
+    //    romi.execute(command).await.unwrap();
+    //}
     let map = &state.map;
 
-    romi.route(map, (1, 0)).await?;
+    romi.route(map, (0, 4)).await?;
 
     Ok(())
 }

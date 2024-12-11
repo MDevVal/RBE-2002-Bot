@@ -9,8 +9,8 @@ enum Cell {
     Garbage,
 }
 
-const WIDTH: usize = 24;
-const HEIGHT: usize = 8;
+const WIDTH: usize = 32;
+const HEIGHT: usize = 32;
 pub struct Map {
     map: [[Cell; HEIGHT]; WIDTH],
     grid: Grid,
@@ -22,8 +22,9 @@ impl Map {
 
         let mut grid = Grid::new(WIDTH, HEIGHT);
         grid.fill();
-        grid.remove_vertex((0,1));
-        grid.remove_vertex((1,1));
+        grid.remove_vertex((0,2));
+        grid.remove_vertex((1,3));
+        grid.remove_vertex((2,4));
         Self { map, grid }
     }
 
@@ -34,8 +35,7 @@ impl Map {
     ) -> anyhow::Result<Vec<(usize, usize)>> {
         let route = dijkstra(
             &from,
-            |n| self.grid.neighbours(n.clone()).into_iter().map(|n| (n, 1)),
-            |n| *n == to,
+            |n| self.grid.neighbours(n.clone()).into_iter().map(|n| (n, 1)), |n| *n == to,
         )
         .context("no route")?;
 

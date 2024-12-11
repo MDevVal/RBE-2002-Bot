@@ -93,6 +93,12 @@ pub struct Romi {
     position: GridCell,
 }
 
+impl Romi {
+    pub fn position(&self) -> &GridCell {
+        &self.position
+    }
+}
+
 pub async fn next_state(
     Path(id): Path<u8>,
     state: State<Arc<ServerState>>,
