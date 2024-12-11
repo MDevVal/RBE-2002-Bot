@@ -5,8 +5,8 @@ use pathfinding::{grid::Grid, prelude::dijkstra};
 enum Cell {
     Empty,
     Romi,
-    Obstacle, 
-    Garbage, 
+    Obstacle,
+    Garbage,
 }
 
 const WIDTH: usize = 24;
@@ -18,19 +18,24 @@ pub struct Map {
 
 impl Map {
     pub fn new() -> Self {
-        let map = [[Cell::Empty;HEIGHT];WIDTH];
+        let map = [[Cell::Empty; HEIGHT]; WIDTH];
 
         let mut grid = Grid::new(WIDTH, HEIGHT);
         grid.fill();
         Self { map, grid }
     }
 
-    pub fn route(&self, from: (usize, usize), to: (usize, usize)) -> anyhow::Result<Vec<(usize, usize)>>{
+    pub fn route(
+        &self,
+        from: (usize, usize),
+        to: (usize, usize),
+    ) -> anyhow::Result<Vec<(usize, usize)>> {
         let route = dijkstra(
             &from,
-            |n| self.grid.neighbours(n.clone()).into_iter().map(|n| (n,1)),
+            |n| self.grid.neighbours(n.clone()).into_iter().map(|n| (n, 1)),
             |n| *n == to,
-        ).context("no route")?;
+        )
+        .context("no route")?;
 
         Ok(route.0)
     }

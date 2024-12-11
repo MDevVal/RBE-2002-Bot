@@ -1,17 +1,17 @@
+mod map;
 mod protos;
 mod romi;
-mod map;
 use std::sync::Arc;
 
 use anyhow::Result;
+use axum::routing::{get, post};
+use axum::Router;
 use map::Map;
 use protobuf::{EnumOrUnknown, Message};
 use protos::message::server_command::State;
 use protos::message::ServerCommand;
 use romi::{next_state, RomiCommander, RomiStore};
 use tokio::net::TcpListener;
-use axum::routing::{get, post};
-use axum::Router;
 use tokio::sync::mpsc::{self, Sender};
 use tokio::sync::RwLock;
 use tracing::info;
@@ -53,7 +53,7 @@ async fn main() -> Result<()> {
         .route("/nextState/:id", post(next_state))
         .with_state(state.clone());
 
-    tokio::spawn(async { 
+    tokio::spawn(async {
         axum::serve(listener, app).await.unwrap();
     });
 
@@ -61,12 +61,12 @@ async fn main() -> Result<()> {
 
     let map = &state.map;
 
-    romi.route(map, (1,1)).await?;
-    romi.route(map, (0,0)).await?;
-    romi.go_cell(0,1).await?;
-    romi.go_cell(1,1).await?;
-    romi.go_cell(1,0).await?;
-    romi.go_cell(0,1).await?;
+    romi.route(map, (1, 1)).await?;
+    romi.route(map, (0, 0)).await?;
+    romi.go_cell(0, 1).await?;
+    romi.go_cell(1, 1).await?;
+    romi.go_cell(1, 0).await?;
+    romi.go_cell(0, 1).await?;
 
     Ok(())
 }
