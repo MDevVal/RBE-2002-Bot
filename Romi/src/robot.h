@@ -105,7 +105,7 @@ protected:
 
   Interface ESPInterface = Interface(Serial1);
 
-  bool waiting = true;
+  bool waiting = false;
 
 public:
   Robot(void) {

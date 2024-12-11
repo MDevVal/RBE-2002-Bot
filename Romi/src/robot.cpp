@@ -299,19 +299,19 @@ void Robot::RobotLoop(void) {
    * Check for any messages from the ESP32
    */
   size_t msg_size;
-  // if (!ESPInterface.readUART(msg_size))
-  //   return;
+  if (!ESPInterface.readUART(msg_size))
+    return;
 
 //   Serial.println("m");
 
-  // message_AprilTag tag = message_AprilTag_init_default;
-  // if (msg_size == message_AprilTag_size) {
-  //   if (!ESPInterface.readProtobuf(tag, message_AprilTag_fields))
-  //     return;
+  message_AprilTag tag = message_AprilTag_init_default;
+  if (msg_size == message_AprilTag_size) {
+    if (!ESPInterface.readProtobuf(tag, message_AprilTag_fields))
+      return;
 
-  //   //Serial.println("Tag ID: " + String(tag.id));
-  //   HandleAprilTag(tag);
-  // }
+    //Serial.println("Tag ID: " + String(tag.id));
+    HandleAprilTag(tag);
+  }
 
   message_ServerCommand data = message_ServerCommand_init_default;
   // if (msg_size == message_ServerCommand_size) {
@@ -327,9 +327,9 @@ void Robot::RobotLoop(void) {
     // robotState = ROBOT_SEARCHING;
     // chassis.SetTwist(0, data.baseSpeed);
 
-    EnterRamping(5);
-    // Serial.println(robotState);
-    return;
+    //EnterRamping(5);
+    //// Serial.println(robotState);
+    //return;
 
     if (data.has_targetGridCell) {
         iTarget = data.targetGridCell.x;

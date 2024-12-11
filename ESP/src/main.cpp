@@ -11,7 +11,7 @@
 const char *ssid = "RBE";
 const char *password = "elm69wisest16poisoned";
 char *serverURL =
-    "http://130.215.121.37:8080/nextState/178"; // The server endpoint
+    "http://130.215.121.37:8080/nextState/"; // The server endpoint
 
 Interface romiInterface = Interface(Serial1);
 ServerInterface server = ServerInterface(serverURL);
@@ -36,21 +36,20 @@ void setup() {
   Serial1.begin(115200, SERIAL_8N1, 25, 26);
   Serial2.begin(115200);
 
-  // delay(5000);
+  delay(5000);
 
-  // // Connect to Wi-Fi
-  // WiFi.begin(ssid, password);
-  // while (WiFi.status() != WL_CONNECTED) {
-  //   delay(1000);
-  //   Serial.println("Connecting to WiFi...");
-  // }
-  // Serial.println("Connected to WiFi");
+  // Connect to Wi-Fi
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.println("Connecting to WiFi...");
+  }
+  Serial.println("Connected to WiFi");
 
-  // char fullURL[128];
-  // snprintf(fullURL, sizeof(fullURL), "%s%d", serverURL, macHash());
-  // Serial.println(fullURL);
-  
-  // server.setServerURL(fullURL);
+  char fullURL[128];
+  snprintf(fullURL, sizeof(fullURL), "%s%d", serverURL, macHash());
+  Serial.println(fullURL);
+  server.setServerURL(fullURL);
 }
 
 void loop() {
@@ -93,21 +92,21 @@ void loop() {
   if (!romiInterface.readUART(msg_size))
     return;
 
-  // message_RomiData data = message_RomiData_init_default;
-  // if (msg_size == message_RomiData_size) {
+  message_RomiData data = message_RomiData_init_default;
+  if (msg_size == message_RomiData_size) {
 
-  //   // Decode the message from the Romi
-  //   if (!romiInterface.readProtobuf(data, message_RomiData_fields)) 
-  //     return;
-  //   Serial.println("got message from romi");
+    // Decode the message from the Romi
+    if (!romiInterface.readProtobuf(data, message_RomiData_fields)) 
+      return;
+    Serial.println("got message from romi");
 
-  //   message_ServerCommand serverMessage = message_ServerCommand_init_default;
+    message_ServerCommand serverMessage = message_ServerCommand_init_default;
 
-  //   // Send the Romi data to the server, and send the response back to the
-  //   if (server.HTTPRequest(data, serverMessage)) {
-  //     Serial.println("recived message from server, sending to romi");
-  //     romiInterface.sendProtobuf(serverMessage, message_ServerCommand_fields,
-  //                                 message_ServerCommand_size);
-  //   }
-  // }
+    // Send the Romi data to the server, and send the response back to the
+    if (server.HTTPRequest(data, serverMessage)) {
+      Serial.println("recived message from server, sending to romi");
+      romiInterface.sendProtobuf(serverMessage, message_ServerCommand_fields,
+                                  message_ServerCommand_size);
+    }
+  }
 }
