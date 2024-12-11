@@ -1,0 +1,25 @@
+body {
+  margin: 0;
+  padding: 0;
+  background: #eee;
+  font-family: sans-serif;
+  overflow: hidden;
+}
+#grid {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border: 1px solid #ccc;
+  background: white;
+}
+.entity {
+  position: absolute;
+  box-sizing: border-box;
+}
+.romi {
+  background: red;
+}
+.obstacle {
+  background: black;
+}

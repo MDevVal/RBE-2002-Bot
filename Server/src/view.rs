@@ -1,14 +1,17 @@
 use axum::{
-    extract::{ws::{CloseFrame, Message, WebSocket, WebSocketUpgrade}, ConnectInfo, State},
+    extract::{
+        ws::{CloseFrame, Message, WebSocket, WebSocketUpgrade},
+        ConnectInfo, State,
+    },
     response::IntoResponse,
     routing::any,
     Router,
 };
 use axum_extra::TypedHeader;
+use futures_util::SinkExt;
+use futures_util::StreamExt;
 use serde::{Deserialize, Serialize};
 use std::{borrow::Cow, net::SocketAddr, ops::ControlFlow, path::PathBuf, sync::Arc};
-use futures_util::StreamExt;
-use futures_util::SinkExt;
 
 use crate::ServerState;
 
@@ -16,7 +19,7 @@ use crate::ServerState;
 struct RomiDatum {
     x: i32,
     y: i32,
-    name: u8
+    name: u8,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -41,24 +44,29 @@ pub async fn ws_handler(
 }
 
 /// Actual websocket statemachine (one will be spawned per connection)
-async fn handle_socket(mut socket: WebSocket, who: SocketAddr,
-    state: State<Arc<ServerState>>,
-    ) {
+async fn handle_socket(mut socket: WebSocket, who: SocketAddr, state: State<Arc<ServerState>>) {
     let (mut sender, mut receiver) = socket.split();
 
     let mut send_task = tokio::spawn(async move {
         loop {
-            sender.send(Message::Text(serde_json::to_string(&Datum::Romi(RomiDatum {
-                x: 3,
-                y: 5,
-                name: 100
-            })).unwrap())).await.unwrap();
+            sender
+                .send(Message::Text(
+                    serde_json::to_string(&Datum::Romi(RomiDatum {
+                        x: 3,
+                        y: 5,
+                        name: 100,
+                    }))
+                    .unwrap(),
+                ))
+                .await
+                .unwrap();
 
-            sender.send(Message::Text(serde_json::to_string(&Datum::Obstacle(PosDatum {
-                x: 5,
-                y: 5,
-            })).unwrap())).await.unwrap();
-
+            sender
+                .send(Message::Text(
+                    serde_json::to_string(&Datum::Obstacle(PosDatum { x: 5, y: 5 })).unwrap(),
+                ))
+                .await
+                .unwrap();
 
             for romi in state.romis.iter() {
                 let name = *romi.key();
@@ -68,14 +76,10 @@ async fn handle_socket(mut socket: WebSocket, who: SocketAddr,
                     y: pos.y,
                     name,
                 };
-                sender.send(Message::Text(serde_json::to_string(&romi).unwrap())).await.unwrap();
-            }
-            if sender
-                .send(Message::Text(format!("Server message ...")))
-                .await
-                .is_err()
-            {
-                break;
+                sender
+                    .send(Message::Text(serde_json::to_string(&romi).unwrap()))
+                    .await
+                    .unwrap();
             }
 
             tokio::time::sleep(std::time::Duration::from_millis(300)).await;
