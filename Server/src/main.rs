@@ -39,7 +39,7 @@ async fn main() -> Result<()> {
     let reg = tracing_subscriber::registry().with(stdout);
     reg.try_init()?;
 
-    let port = 8081;
+    let port = 8080;
     let listener = TcpListener::bind(format!("0.0.0.0:{port}")).await?;
 
     let (sender, mut romis) = mpsc::channel(8);

@@ -19,6 +19,19 @@ struct RomiDatum {
     name: u8
 }
 
+#[derive(Serialize, Deserialize)]
+struct PosDatum {
+    x: i32,
+    y: i32,
+}
+
+#[derive(Serialize, Deserialize)]
+enum Datum {
+    Romi(RomiDatum),
+    Garbage(PosDatum),
+    Obstacle(PosDatum),
+}
+
 pub async fn ws_handler(
     ws: WebSocketUpgrade,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
@@ -35,6 +48,18 @@ async fn handle_socket(mut socket: WebSocket, who: SocketAddr,
 
     let mut send_task = tokio::spawn(async move {
         loop {
+            sender.send(Message::Text(serde_json::to_string(&Datum::Romi(RomiDatum {
+                x: 3,
+                y: 5,
+                name: 100
+            })).unwrap())).await.unwrap();
+
+            sender.send(Message::Text(serde_json::to_string(&Datum::Obstacle(PosDatum {
+                x: 5,
+                y: 5,
+            })).unwrap())).await.unwrap();
+
+
             for romi in state.romis.iter() {
                 let name = *romi.key();
                 let pos = romi.value().position();

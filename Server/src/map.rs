@@ -12,17 +12,18 @@ enum Cell {
 const WIDTH: usize = 32;
 const HEIGHT: usize = 32;
 pub struct Map {
-    map: [[Cell; HEIGHT]; WIDTH],
+    map: [[Cell; WIDTH]; HEIGHT],
     grid: Grid,
 }
 
 impl Map {
     pub fn new() -> Self {
-        let map = [[Cell::Empty; HEIGHT]; WIDTH];
+        let mut map = [[Cell::Empty; HEIGHT]; WIDTH];
 
         let mut grid = Grid::new(WIDTH, HEIGHT);
         grid.fill();
         grid.remove_vertex((0,2));
+        map[0][2] = Cell::Garbage;
         grid.remove_vertex((1,3));
         grid.remove_vertex((2,4));
         Self { map, grid }

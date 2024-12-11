@@ -6,11 +6,6 @@ socket.addEventListener('open', function (event) {
     socket.send('Hello Server!');
 });
 
-function mapToGrid(x, y) {
-    x = x * 100 + 50;
-    y = y + 50;
-}
-
 socket.addEventListener('message', function (event) {
     console.log('Message from server ', event.data);
     const msg = JSON.parse(event.data);
@@ -20,10 +15,11 @@ socket.addEventListener('message', function (event) {
     var x = msg.x;
     var y = msg.y;
 
-    mapToGrid(x, y);
+    x = x * 100 + 50;
+    y = y + 50;
 
-    romi.style.left = x  + 'px';
-    romi.style.top = y + 'px';
+    romi.style.left = x  + '%';
+    romi.style.top = y + '%';
 });
 
 
