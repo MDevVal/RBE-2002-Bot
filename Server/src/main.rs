@@ -18,9 +18,9 @@ use romi::{next_state, RomiCommander, RomiStore};
 use tokio::net::TcpListener;
 use tokio::sync::mpsc::{self, Sender};
 use tokio::sync::RwLock;
+use tower_http::services::ServeDir;
 use tracing::{info, trace};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use tower_http::services::ServeDir;
 use view::ws_handler;
 
 struct ServerState {
@@ -47,9 +47,9 @@ async fn main() -> Result<()> {
     let (goal_sender, mut goals) = mpsc::channel(8);
 
     let mut map = Map::new();
-    map.insert_obstacle((0,2));
-    map.insert_obstacle((1,3));
-    map.insert_obstacle((2,4));
+    map.insert_obstacle((0, 2));
+    map.insert_obstacle((1, 3));
+    map.insert_obstacle((2, 4));
 
     let state = ServerState {
         romis: Default::default(),
@@ -65,9 +65,9 @@ async fn main() -> Result<()> {
         //.route("/", get(home))
         .route("/protobuf", get(data))
         .route("/protobuf", post(data))
-        .route("/obstacle", post(obstacle))
         .route("/goal", post(goal))
-        .route("/obstacle", post(remove_obstacle))
+        .route("/obstacle", post(obstacle))
+        .route("/remove_obstacle", post(remove_obstacle))
         .route("/positions", any(ws_handler))
         .route("/nextState/:id", post(next_state))
         .with_state(state.clone())
@@ -84,7 +84,6 @@ async fn main() -> Result<()> {
         let goal = goals.recv().await.unwrap();
         romi.route(map, goal).await.unwrap();
     }
-
 
     //loop {
     //    let mut command = ServerCommand::new();
@@ -111,10 +110,7 @@ async fn home() -> &'static str {
     "server"
 }
 
-async fn goal(
-    state: extract::State<Arc<ServerState>>,
-    data: Json<(usize, usize)>,
-) {
+async fn goal(state: extract::State<Arc<ServerState>>, data: Json<(usize, usize)>) {
     trace!("sending romi to {data:?}");
     state.goals.send(data.0).await.unwrap();
 }
