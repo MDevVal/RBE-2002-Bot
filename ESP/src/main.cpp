@@ -5,8 +5,8 @@
 #include "message.pb.h"
 #include <Interface.h>
 #include <ServerInterface.h>
-#include <openmv.h>
 #include <apriltagdatum.h>
+#include <openmv.h>
 
 const char *ssid = "RBE";
 const char *password = "elm69wisest16poisoned";
@@ -33,6 +33,8 @@ uint8_t macHash() {
 
 void setup() {
   Serial.begin(115200);
+  Serial1.begin(115200, SERIAL_8N1, 25, 26);
+  Serial2.begin(115200, SERIAL_8N1, 16, 17);
 
   // Connect to Wi-Fi
   WiFi.begin(ssid, password);
@@ -48,7 +50,7 @@ void setup() {
 
 void loop() {
   AprilTagDatum tag;
-  if(camera.checkUART(tag)) {
+  if (camera.checkUART(tag)) {
     message_AprilTag aprilTag = message_AprilTag_init_default;
     aprilTag.id = tag.id;
     aprilTag.has_pose = true;
@@ -59,9 +61,9 @@ void loop() {
     aprilTag.pose.pitch = tag.pitch;
     aprilTag.pose.heading = tag.yaw;
 
-    romiInterface.sendProtobuf(aprilTag, message_AprilTag_fields, message_AprilTag_size);
+    romiInterface.sendProtobuf(aprilTag, message_AprilTag_fields,
+                               message_AprilTag_size);
   }
-
 
   size_t msg_size;
   if (!romiInterface.readUART(msg_size))
