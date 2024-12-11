@@ -195,6 +195,8 @@ void Robot::RobotLoop(void) {
       LineFollowingUpdate();
     if (robotState == ROBOT_RAMPING)
       RampingUpdate();
+    if (robotState == ROBOT_TURNING && CheckTurnComplete())
+      HandleTurnComplete();
 
     servo.update();
     int32_t reading = 0;
@@ -294,7 +296,8 @@ void Robot::RobotLoop(void) {
         EnterLineFollowing(data.baseSpeed);
         break;
       case message_ServerCommand_State_LINING:
-        EnterLineFollowing(data.baseSpeed);
+        baseSpeed = data.baseSpeed;
+        HandleCenteringComplete();
         break;
       case message_ServerCommand_State_TURNING:
         EnterTurn(data.baseSpeed);
