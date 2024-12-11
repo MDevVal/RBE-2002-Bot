@@ -153,8 +153,10 @@ void Robot::RobotLoop(void) {
   }
   if (robotState == ROBOT_LINING)
     LineFollowingUpdate(false);
+
   if (robotState == ROBOT_RAMPING)
     RampingUpdate();
+
   if (robotState == ROBOT_TURNING && CheckTurnComplete())
     HandleTurnComplete();
 

@@ -38,7 +38,6 @@ void setup() {
 
   delay(5000);
 
-  // Connect to Wi-Fi
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
@@ -46,36 +45,15 @@ void setup() {
   }
   Serial.println("Connected to WiFi");
 
-  // char fullURL[128];
-  // snprintf(fullURL, sizeof(fullURL), "%s%d", serverURL, macHash());
-  // Serial.println(fullURL);
   server.setServerURL(serverURL);
 }
 
 void loop() {
-  //
-  // message_ServerCommand serverMessage = message_ServerCommand_init_default;
-  //
-  // // // Send the Romi data to the server, and send the response back to the
-  // if (server.HTTPRequest(message_RomiData_init_default, serverMessage)) {
-  //   Serial.println("recived message from server, sending to romi");
-  //   romiInterface.sendProtobuf(serverMessage, message_ServerCommand_fields,
-  //                              message_ServerCommand_size);
-  // }
-  //
   AprilTagDatum tag;
   if (camera.checkUART(tag)) {
     Serial.println("Tag ID: " + String(tag.id));
 
     message_AprilTag aprilTag = message_AprilTag_init_default;
-    // aprilTag.id = tag.id;
-    // aprilTag.has_pose = true;
-    // aprilTag.pose.x = tag.x;
-    // aprilTag.pose.y = tag.y;
-    // aprilTag.pose.z = tag.z;
-    // aprilTag.pose.roll = tag.roll;
-    // aprilTag.pose.pitch = tag.pitch;
-    // aprilTag.pose.heading = tag.yaw;
 
     aprilTag.id = tag.id;
     aprilTag.cx = tag.cx;
@@ -98,13 +76,13 @@ void loop() {
     // Decode the message from the Romi
     if (!romiInterface.readProtobuf(data, message_RomiData_fields))
       return;
-    Serial.println("got message from romi");
+    // Serial.println("got message from romi");
 
     message_ServerCommand serverMessage = message_ServerCommand_init_default;
 
     // Send the Romi data to the server, and send the response back to the
     if (server.HTTPRequest(data, serverMessage)) {
-      Serial.println("recived message from server, sending to romi");
+      // Serial.println("recived message from server, sending to romi");
       romiInterface.sendProtobuf(serverMessage, message_ServerCommand_fields,
                                  message_ServerCommand_size);
     }
