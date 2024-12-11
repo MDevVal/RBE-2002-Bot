@@ -60,7 +60,7 @@ void loop() {
   if (server.HTTPRequest(message_RomiData_init_default, serverMessage)) {
     Serial.println("recived message from server, sending to romi");
     romiInterface.sendProtobuf(serverMessage, message_ServerCommand_fields,
-                                message_ServerCommand_size);
+                               message_ServerCommand_size);
   }
 
   // AprilTagDatum tag;
@@ -88,25 +88,26 @@ void loop() {
   //                              message_AprilTag_size);
   // }
 
-  // size_t msg_size;
-  // if (!romiInterface.readUART(msg_size))
-  //   return;
+  size_t msg_size;
+  if (!romiInterface.readUART(msg_size))
+    return;
 
-  // message_RomiData data = message_RomiData_init_default;
-  // if (msg_size == message_RomiData_size) {
+  message_RomiData data = message_RomiData_init_default;
+  if (msg_size == message_RomiData_size) {
 
-  //   // Decode the message from the Romi
-  //   if (!romiInterface.readProtobuf(data, message_RomiData_fields)) 
-  //     return;
-  //   Serial.println("got message from romi");
+    // Decode the message from the Romi
+    if (!romiInterface.readProtobuf(data, message_RomiData_fields))
+      return;
+    Serial.println("got message from romi");
 
-      // message_ServerCommand serverMessage = message_ServerCommand_init_default;
+    message_ServerCommand serverMessage = message_ServerCommand_init_default;
 
-      // Send the Romi data to the server, and send the response back to the
-      // if (server.HTTPRequest(data, serverMessage)) {
-      //   Serial.println("recived message from server, sending to romi");
-      //   romiInterface.sendProtobuf(serverMessage, message_ServerCommand_fields,
-      //                               message_ServerCommand_size);
-      // }
-  // }
+    // Send the Romi data to the server,
+    //     and send the response back to the
+    if (server.HTTPRequest(data, serverMessage)) {
+      Serial.println("recived message from server, sending to romi");
+      romiInterface.sendProtobuf(serverMessage, message_ServerCommand_fields,
+                                 message_ServerCommand_size);
+    }
+  }
 }
