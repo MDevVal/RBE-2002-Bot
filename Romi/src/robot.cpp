@@ -123,11 +123,11 @@ void Robot::HandleAprilTag(message_AprilTag& tag) {
 
     if (robotState == ROBOT_GIMMIE_THAT_TAG) {
         // negative because camera is on the back
-        // float fwdErr = (95. - (float) tag.h);
-        // float turnErr = (60. - (float) tag.cx);
+        float fwdErr = (95. - (float) tag.h);
+        float turnErr = (60. - (float) tag.cx);
 
-        float fwdErr = (.01 - tag.pose.x);
-        float turnErr = (.01 - tag.pose.heading);
+        // float fwdErr = (.01 - tag.pose.x);
+        // float turnErr = (.01 - tag.pose.heading);
 
         float fwdEffort = -.2 * fwdErr;
         float turnEffort = -.035 * turnErr;
