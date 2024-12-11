@@ -10,8 +10,9 @@
 
 const char *ssid = "RBE";
 const char *password = "elm69wisest16poisoned";
-const char *serverURL =
-    "http://130.215.137.221:8080/nextState/"; // The server endpoint
+char *serverURL =
+    // "http://130.215.137.221:8080/nextState/178"; // The server endpoint
+    "http://130.215.137.221:8080/protobuf";
 
 Interface romiInterface = Interface(Serial1);
 ServerInterface server = ServerInterface(serverURL);
@@ -36,6 +37,8 @@ void setup() {
   Serial1.begin(115200, SERIAL_8N1, 25, 26);
   Serial2.begin(115200);
 
+  delay(5000);
+
   // Connect to Wi-Fi
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
@@ -46,50 +49,65 @@ void setup() {
 
   char fullURL[128];
   snprintf(fullURL, sizeof(fullURL), "%s%d", serverURL, macHash());
+  Serial.println(fullURL);
+  // server.setServerURL(fullURL);
 }
 
 void loop() {
-  AprilTagDatum tag;
-  if (camera.checkUART(tag)) {
-    Serial.println("Tag ID: " + String(tag.id));
 
-    message_AprilTag aprilTag = message_AprilTag_init_default;
-    // aprilTag.id = tag.id;
-    // aprilTag.has_pose = true;
-    // aprilTag.pose.x = tag.x;
-    // aprilTag.pose.y = tag.y;
-    // aprilTag.pose.z = tag.z;
-    // aprilTag.pose.roll = tag.roll;
-    // aprilTag.pose.pitch = tag.pitch;
-    // aprilTag.pose.heading = tag.yaw;
+  message_ServerCommand serverMessage = message_ServerCommand_init_default;
 
-    aprilTag.id = tag.id;
-    aprilTag.cx = tag.cx;
-    aprilTag.cy = tag.cy;
-    aprilTag.w = tag.w;
-    aprilTag.h = tag.h;
-    aprilTag.rot = tag.rot;
-
-    romiInterface.sendProtobuf(aprilTag, message_AprilTag_fields,
-                               message_AprilTag_size);
+  // Send the Romi data to the server, and send the response back to the
+  if (server.HTTPRequest(message_RomiData_init_default, serverMessage)) {
+    Serial.println("recived message from server, sending to romi");
+    romiInterface.sendProtobuf(serverMessage, message_ServerCommand_fields,
+                                message_ServerCommand_size);
   }
 
-  size_t msg_size;
-  if (!romiInterface.readUART(msg_size))
-    return;
+  // AprilTagDatum tag;
+  // if (camera.checkUART(tag)) {
+  //   Serial.println("Tag ID: " + String(tag.id));
 
-  message_RomiData data = message_RomiData_init_default;
-  if (msg_size == message_RomiData_size) {
+  //   message_AprilTag aprilTag = message_AprilTag_init_default;
+  //   // aprilTag.id = tag.id;
+  //   // aprilTag.has_pose = true;
+  //   // aprilTag.pose.x = tag.x;
+  //   // aprilTag.pose.y = tag.y;
+  //   // aprilTag.pose.z = tag.z;
+  //   // aprilTag.pose.roll = tag.roll;
+  //   // aprilTag.pose.pitch = tag.pitch;
+  //   // aprilTag.pose.heading = tag.yaw;
 
-    // Decode the message from the Romi
-    if (!romiInterface.readProtobuf(data, message_RomiData_fields))
-      return;
+  //   aprilTag.id = tag.id;
+  //   aprilTag.cx = tag.cx;
+  //   aprilTag.cy = tag.cy;
+  //   aprilTag.w = tag.w;
+  //   aprilTag.h = tag.h;
+  //   aprilTag.rot = tag.rot;
 
-    message_ServerCommand serverMessage = message_ServerCommand_init_default;
+  //   romiInterface.sendProtobuf(aprilTag, message_AprilTag_fields,
+  //                              message_AprilTag_size);
+  // }
 
-    // Send the Romi data to the server, and send the response back to the
-    if (server.HTTPRequest(data, serverMessage))
-        romiInterface.sendProtobuf(serverMessage, message_ServerCommand_fields,
-                                   message_ServerCommand_size);
-  }
+  // size_t msg_size;
+  // if (!romiInterface.readUART(msg_size))
+  //   return;
+
+  // message_RomiData data = message_RomiData_init_default;
+  // if (msg_size == message_RomiData_size) {
+
+  //   // Decode the message from the Romi
+  //   if (!romiInterface.readProtobuf(data, message_RomiData_fields)) 
+  //     return;
+  //   Serial.println("got message from romi");
+
+      // message_ServerCommand serverMessage = message_ServerCommand_init_default;
+
+      // Send the Romi data to the server, and send the response back to the
+      // if (server.HTTPRequest(data, serverMessage)) {
+      //   Serial.println("recived message from server, sending to romi");
+      //   romiInterface.sendProtobuf(serverMessage, message_ServerCommand_fields,
+      //                               message_ServerCommand_size);
+      // }
+  // }
 }

@@ -9,7 +9,8 @@
 class ServerInterface
 {
 public:
-    ServerInterface(const char* serverURL) : serverURL(serverURL) {}
+
+    ServerInterface(char* server) : URL(server) {}
 
     bool HTTPRequest(const message_RomiData &sendMsg, message_ServerCommand &recMsg) {
         bool ret = false;
@@ -25,13 +26,15 @@ public:
 
         // Send the serialized protobuf via HTTP POST
         HTTPClient http;
-        http.begin(serverURL);  // The server endpoint
+        // Serial.println("doing a thing");
+        // Serial.println(URL);
+        http.begin(URL);  // The server endpoint
 
         // Set content type to application/x-protobuf
-        http.addHeader("Content-Type", "application/x-protobuf");
+        // http.addHeader("Content-Type", "application/x-protobuf");
 
         // Send the POST request with the protobuf data
-        int httpCode = http.POST(buffer, stream.bytes_written);
+        int httpCode = http.GET();
 
         if (httpCode == HTTP_CODE_OK) {
 
@@ -67,6 +70,13 @@ public:
         http.end();  // Clean up the HTTP request
         return ret;
     }
+
+    void setServerURL(char* newURL) {
+        Serial.println("Setting new server URL");
+        Serial.println(newURL);
+        URL = newURL;
+    }
+
 private:
-    const char* serverURL;
+    char* URL;
 };

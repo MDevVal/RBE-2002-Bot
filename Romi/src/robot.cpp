@@ -190,6 +190,17 @@ void Robot::RobotLoop(void) {
    * Check the Chassis timer, which is used for executing motor control
    */
   if (chassis.CheckChassisTimer()) {
+    if (robotState == ROBOT_IDLE) {
+        message_RomiData data = message_RomiData_init_default;
+        data.has_gridLocation = true;
+        data.gridLocation.x = iGrid;
+        data.gridLocation.y = jGrid;
+        ESPInterface.sendProtobuf(data, message_RomiData_fields,
+                              message_RomiData_size);
+    }
+      
+
+
     // add synchronous, pre-motor-update actions here
     if (robotState == ROBOT_LINING)
       LineFollowingUpdate();
@@ -258,7 +269,7 @@ void Robot::RobotLoop(void) {
    * Check for an IMU update
    */
   if (imu.checkForNewData()) {
-    HandleOrientationUpdate();
+    // HandleOrientationUpdate();
   }
 
   /**
