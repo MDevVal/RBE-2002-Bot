@@ -23,8 +23,6 @@ void Robot::InitializeRobot(void) {
   // The line sensor elements default to INPUTs, but we'll initialize anyways,
   // for completeness
   lineSensor.Initialize();
-
-  EnterLineFollowing(10);
 }
 
 void Robot::EnterIdleState(void) {
@@ -101,77 +99,76 @@ void Robot::RampingUpdate(void) {
   }
 }
 
+void Robot::HandleAprilTag(message_AprilTag &tag) {
+  // Serial.println(" -> TAG FOUND, ID: " + String(tag.id));
 
-void Robot::HandleAprilTag(message_AprilTag& tag) {
-    // Serial.println(" -> TAG FOUND, ID: " + String(tag.id));
+  if (tag.id != 0) {
+    return;
+  }
 
-    if (tag.id != 0) {
-        return;
+  // 3.6 is magic scale constant - OpenMV is a shit library
+  // Pose tagPose = Pose(-3.6 * tag.x, 3.6* tag.y, 3.6 * tag.z,
+  // wrapAngle(tag.roll), wrapAngle(tag.pitch), wrapAngle(tag.yaw));
+  // Serial.print("x: \t" + String(tagPose.x) + "\ty: \t" + String(tagPose.y) +
+  // "\tz: \t" + String(tagPose.z)); Serial.println("\troll: \t" +
+  // String(tagPose.roll * 180./PI) + "\tpitch: \t" + String(tagPose.pitch *
+  // 180./PI) + "\tyaw: \t" + String(tagPose.yaw * 180./PI));
+
+  if (robotState == ROBOT_SEARCHING) {
+    // Serial.println(" -> FOUND THE HOLY GRAIL");
+    robotState = ROBOT_GIMMIE_THAT_TAG;
+    chassis.Stop();
+  }
+
+  if (robotState == ROBOT_GIMMIE_THAT_TAG) {
+    // negative because camera is on the back
+    float fwdErr = (95. - (float)tag.h);
+    float turnErr = (60. - (float)tag.cx);
+
+    // float fwdErr = (.01 - tag.pose.x);
+    // float turnErr = (.01 - tag.pose.heading);
+
+    float fwdEffort = -.2 * fwdErr;
+    float turnEffort = -.035 * turnErr;
+
+    // Serial.println("fwd, turn");
+    // Serial.println(tag.h);
+    // Serial.println(turnErr);
+
+    // Serial.print("turn effort: \t" + String(turnEffort));
+    // Serial.println("\t fwd effort: \t" + String(fwdEffort));
+
+    if (abs(fwdErr) < 5 && abs(turnErr) < 2) {
+      // Serial.println(" -> GOT THE HOLY GRAIL");
+      lastTagId = tag.id;
+      EnterIdleState();
+      EnterLiftingState();
+      return;
     }
-    
-     // 3.6 is magic scale constant - OpenMV is a shit library
-    // Pose tagPose = Pose(-3.6 * tag.x, 3.6* tag.y, 3.6 * tag.z, wrapAngle(tag.roll), wrapAngle(tag.pitch), wrapAngle(tag.yaw));
-    // Serial.print("x: \t" + String(tagPose.x) + "\ty: \t" + String(tagPose.y) + "\tz: \t" + String(tagPose.z));
-    // Serial.println("\troll: \t" + String(tagPose.roll * 180./PI) + "\tpitch: \t" + String(tagPose.pitch * 180./PI) + "\tyaw: \t" + String(tagPose.yaw * 180./PI));
 
-
-    if (robotState == ROBOT_SEARCHING) {
-        // Serial.println(" -> FOUND THE HOLY GRAIL");
-        robotState = ROBOT_GIMMIE_THAT_TAG;
-        chassis.Stop();
-    }
-
-    if (robotState == ROBOT_GIMMIE_THAT_TAG) {
-        // negative because camera is on the back
-        float fwdErr = (95. - (float) tag.h);
-        float turnErr = (60. - (float) tag.cx);
-
-        // float fwdErr = (.01 - tag.pose.x);
-        // float turnErr = (.01 - tag.pose.heading);
-
-        float fwdEffort = -.2 * fwdErr;
-        float turnEffort = -.035 * turnErr;
-
-        // Serial.println("fwd, turn");
-        // Serial.println(tag.h);
-        // Serial.println(turnErr);
-
-
-        // Serial.print("turn effort: \t" + String(turnEffort));
-        // Serial.println("\t fwd effort: \t" + String(fwdEffort));
-
-        if (abs(fwdErr) < 5 && abs(turnErr) < 2) {
-            // Serial.println(" -> GOT THE HOLY GRAIL");
-            lastTagId = tag.id;
-            EnterIdleState();
-            EnterLiftingState();
-            return;
-        }
-
-        chassis.SetTwist(fwdEffort, turnEffort);
-    }
+    chassis.SetTwist(fwdEffort, turnEffort);
+  }
 }
 
 void Robot::EnterLiftingState(void) {
-    // Serial.println(" -> LIFTING");
-    robotState = ROBOT_LIFTING;
-    liftingTimer.start(1000);
-    chassis.SetTwist(-10, 0);
+  // Serial.println(" -> LIFTING");
+  robotState = ROBOT_LIFTING;
+  liftingTimer.start(1000);
+  chassis.SetTwist(-10, 0);
 }
 
-
 void Robot::SetLifter(float position) {
-    servo.setTargetPos(map(position, 0, 180, 800, 2200));
+  servo.setTargetPos(map(position, 0, 180, 800, 2200));
 }
 
 void Robot::HandleWeight(int32_t avg) {
-    // Serial.println("BILL");
-    // Serial.println("-------");
-    // Serial.print("Weight: ");
-    // Serial.print((avg - 267097)/909.);
-    // Serial.print("g, \t ID: ");
-    // Serial.println(lastTagId);
-    EnterIdleState();
+  // Serial.println("BILL");
+  // Serial.println("-------");
+  // Serial.print("Weight: ");
+  // Serial.print((avg - 267097)/909.);
+  // Serial.print("g, \t ID: ");
+  // Serial.println(lastTagId);
+  EnterIdleState();
 }
 
 void Robot::RobotLoop(void) {
@@ -191,19 +188,12 @@ void Robot::RobotLoop(void) {
    */
   if (chassis.CheckChassisTimer()) {
     if (robotState == ROBOT_IDLE) {
-        message_RomiData data = message_RomiData_init_default;
-        data.has_gridLocation = true;
-        data.gridLocation.x = iGrid;
-        data.gridLocation.y = jGrid;
-        ESPInterface.sendProtobuf(data, message_RomiData_fields,
-                              message_RomiData_size);
     }
-      
-
 
     // add synchronous, pre-motor-update actions here
     if (robotState == ROBOT_LINING)
       LineFollowingUpdate();
+
     if (robotState == ROBOT_RAMPING)
       RampingUpdate();
     if (robotState == ROBOT_TURNING && CheckTurnComplete())
@@ -211,37 +201,35 @@ void Robot::RobotLoop(void) {
 
     servo.update();
     int32_t reading = 0;
-    if(loadCellHX1.GetReading(reading)) 
-    {
+    if (loadCellHX1.GetReading(reading)) {
 
-        if (robotState == ROBOT_WEIGHING) {
-            HandleWeight(reading);
-            // loadCellReading[loadCellIndex] = reading;
-            // loadCellIndex++;
-            // if (loadCellIndex == numLoadCellReadings) {
-            //     // Serial.println("LOAD CELL READING START:");
-            //     int32_t avg = 0;
-            //     for (uint8_t i = 0; i < numLoadCellReadings; i++) {
-            //         avg += loadCellReading[i];
-            //         // Serial.print(loadCellReading[i]);
-            //         // Serial.print(", ");
-            //     }
-                // Serial.println("LOAD CELL READING END");
-            //     HandleWeight(avg / (float) numLoadCellReadings);
-            // };
-        }
+      if (robotState == ROBOT_WEIGHING) {
+        HandleWeight(reading);
+        // loadCellReading[loadCellIndex] = reading;
+        // loadCellIndex++;
+        // if (loadCellIndex == numLoadCellReadings) {
+        //     // Serial.println("LOAD CELL READING START:");
+        //     int32_t avg = 0;
+        //     for (uint8_t i = 0; i < numLoadCellReadings; i++) {
+        //         avg += loadCellReading[i];
+        //         // Serial.print(loadCellReading[i]);
+        //         // Serial.print(", ");
+        //     }
+        // Serial.println("LOAD CELL READING END");
+        //     HandleWeight(avg / (float) numLoadCellReadings);
+        // };
+      }
     }
 
     if (robotState == ROBOT_LIFTING && liftingTimer.checkExpired()) {
-        chassis.Stop();
-        SetLifter(0);
-        
-        delay(1000);
+      chassis.Stop();
+      SetLifter(0);
 
-        robotState = ROBOT_WEIGHING;
-        loadCellIndex = 0;
+      delay(1000);
+
+      robotState = ROBOT_WEIGHING;
+      loadCellIndex = 0;
     }
-
 
     chassis.UpdateMotors();
 
@@ -251,8 +239,16 @@ void Robot::RobotLoop(void) {
   /**
    * Check for any intersections
    */
-  if (robotState == ROBOT_LINING && lineSensor.CheckIntersection())
+  if (robotState == ROBOT_LINING && lineSensor.CheckIntersection()) {
     HandleIntersection();
+
+    message_RomiData data = message_RomiData_init_default;
+    data.has_gridLocation = true;
+    data.gridLocation.x = iGrid;
+    data.gridLocation.y = jGrid;
+    ESPInterface.sendProtobuf(data, message_RomiData_fields,
+                              message_RomiData_size);
+  }
 
   if (robotState == ROBOT_CENTERING && CheckCenteringComplete()) {
     EnterIdleState();

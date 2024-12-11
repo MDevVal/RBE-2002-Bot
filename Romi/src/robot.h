@@ -1,12 +1,12 @@
 #pragma once
 #include "chassis.h"
+#include <HX711.h>
 #include <Interface.h>
 #include <LSM6.h>
 #include <LineSensor.h>
 #include <PID.h>
-#include <servo32u4.h>
-#include <HX711.h>
 #include <message.pb.h>
+#include <servo32u4.h>
 
 class Robot {
 protected:
@@ -92,7 +92,7 @@ protected:
   // direciton controls
   uint8_t turnPIDCount = 0;
   int8_t currDirection = EAST, targetDirection = 0;
-  uint8_t iGrid = 2, jGrid = 2, iTarget = 1, jTarget = 1;
+  uint8_t iGrid = 0, jGrid = 0, iTarget = 1, jTarget = 0;
 
   // ramp controls
   bool onRamp = false;
@@ -144,8 +144,7 @@ protected:
   void HandleOrientationUpdate(void);
 
   /* Controls */
-  void HandleAprilTag(message_AprilTag& tag);
-  
+  void HandleAprilTag(message_AprilTag &tag);
 
   /* For commanding the lifter servo */
   void EnterLiftingState(void);
