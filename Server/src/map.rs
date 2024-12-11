@@ -22,6 +22,8 @@ impl Map {
 
         let mut grid = Grid::new(WIDTH, HEIGHT);
         grid.fill();
+        grid.remove_vertex((0,1));
+        grid.remove_vertex((1,1));
         Self { map, grid }
     }
 

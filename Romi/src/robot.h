@@ -67,7 +67,7 @@ protected:
 
   Servo32U4Pin5 servo;
 
-  HX711<4, 12> loadCellHX1;
+  HX711<6, 13> loadCellHX1;
   const static uint8_t numLoadCellReadings = 50;
   int32_t loadCellReading[numLoadCellReadings];
   uint8_t loadCellIndex = 0;

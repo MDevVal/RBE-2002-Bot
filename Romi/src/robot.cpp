@@ -117,6 +117,7 @@ void Robot::HandleAprilTag(message_AprilTag &tag) {
   // 180./PI) + "\tyaw: \t" + String(tagPose.yaw * 180./PI));
 
   if (robotState == ROBOT_SEARCHING) {
+      SetLifter(180);
     // Serial.println(" -> FOUND THE HOLY GRAIL");
     robotState = ROBOT_GIMMIE_THAT_TAG;
     chassis.Stop();
@@ -155,12 +156,13 @@ void Robot::HandleAprilTag(message_AprilTag &tag) {
 void Robot::EnterLiftingState(void) {
   // Serial.println(" -> LIFTING");
   robotState = ROBOT_LIFTING;
+  SetLifter(90);
   liftingTimer.start(1000);
   chassis.SetTwist(-10, 0);
 }
 
 void Robot::SetLifter(float position) {
-  servo.setTargetPos(map(position, 0, 180, 800, 2200));
+  servo.setTargetPos(map(position, 0, 180, 1000, 2000));
 }
 
 void Robot::HandleWeight(int32_t avg) {
@@ -237,7 +239,7 @@ void Robot::RobotLoop(void) {
 
     if (robotState == ROBOT_LIFTING && liftingTimer.checkExpired()) {
       chassis.Stop();
-      SetLifter(0);
+      SetLifter(180);
 
       delay(1000);
 
@@ -299,7 +301,8 @@ void Robot::RobotLoop(void) {
   if (msg_size == message_AprilTag_size) {
     if (!ESPInterface.readProtobuf(tag, message_AprilTag_fields))
       return;
-    // Serial.println("Tag ID: " + String(tag.id));
+
+    //Serial.println("Tag ID: " + String(tag.id));
     HandleAprilTag(tag);
   }
 

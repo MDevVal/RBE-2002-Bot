@@ -8,7 +8,7 @@ use axum::routing::{get, post};
 use axum::Router;
 use map::Map;
 use protobuf::{EnumOrUnknown, Message};
-use protos::message::server_command::State;
+use protos::message::server_command::{self, State};
 use protos::message::ServerCommand;
 use romi::{next_state, RomiCommander, RomiStore};
 use tokio::net::TcpListener;
@@ -60,18 +60,14 @@ async fn main() -> Result<()> {
 
     let mut romi = romis.recv().await.unwrap();
 
+    loop {
+        let mut command = ServerCommand::new();
+        command.state = Some(EnumOrUnknown::new(server_command::State::SEARCHING));
+        romi.execute(command).await.unwrap();
+    }
     let map = &state.map;
 
-    loop {
-        romi.go_cell(1, 1).await?;
-    }
-
-    romi.route(map, (1, 1)).await?;
-    romi.route(map, (0, 0)).await?;
-    romi.go_cell(0, 1).await?;
-    romi.go_cell(1, 1).await?;
-    romi.go_cell(1, 0).await?;
-    romi.go_cell(0, 1).await?;
+    romi.route(map, (1, 0)).await?;
 
     Ok(())
 }
